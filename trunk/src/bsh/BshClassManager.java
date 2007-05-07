@@ -80,7 +80,7 @@ import java.lang.reflect.Modifier;
 public class BshClassManager
 {
 	/** Identifier for no value item.  Use a hashtable as a Set. */
-	private static Object NOVALUE = new Object(); 
+	private static final Object NOVALUE = new Object(); 
 	/** 
 		The interpreter which created the class manager 
 		This is used to load scripted classes from source files.
@@ -97,24 +97,34 @@ public class BshClassManager
 		Note: these should probably be re-implemented with Soft references.
 		(as opposed to strong or Weak)
 	*/
-    protected transient Hashtable absoluteClassCache = new Hashtable();
+    protected transient Map<String,Class> absoluteClassCache = new Hashtable<String,Class>();
 	/**
 		Global cache for things we know are *not* classes.
 		Note: these should probably be re-implemented with Soft references.
 		(as opposed to strong or Weak)
 	*/
-    protected transient Hashtable absoluteNonClasses = new Hashtable();
+    protected transient Map<String,Object> absoluteNonClasses = new Hashtable<String,Object>();
 
 	/**
 		Caches for resolved object and static methods.
 		We keep these maps separate to support fast lookup in the general case
 		where the method may be either.
 	*/
-	protected transient Hashtable resolvedObjectMethods = new Hashtable();
-	protected transient Hashtable resolvedStaticMethods = new Hashtable();
+	protected transient volatile Map<SignatureKey,Method> resolvedObjectMethods = new Hashtable<SignatureKey,Method>();
+	protected transient volatile Map<SignatureKey,Method> resolvedStaticMethods = new Hashtable<SignatureKey,Method>();
 
-	protected transient Hashtable definingClasses = new Hashtable();
-	protected transient Hashtable definingClassesBaseNames = new Hashtable();
+	protected transient Map<String,Object> definingClasses = new Hashtable<String,Object>();
+	protected transient Map<String,String> definingClassesBaseNames = new Hashtable<String,String>();
+
+	private static final Map<BshClassManager,Object> classManagers = Collections.synchronizedMap(new WeakHashMap<BshClassManager,Object>());
+
+	static void clearResolveCache() {
+		BshClassManager[] managers = (BshClassManager[])classManagers.keySet().toArray(new BshClassManager[0]);
+		for( BshClassManager m : managers ) {
+			m.resolvedObjectMethods = new Hashtable<SignatureKey,Method>();
+			m.resolvedStaticMethods = new Hashtable<SignatureKey,Method>();
+		}
+	}
 
 	/**
 		Create a new instance of the class manager.  
@@ -146,6 +156,7 @@ public class BshClassManager
 		if ( interpreter == null )
 			interpreter = new Interpreter();
 		manager.declaringInterpreter = interpreter;
+		classManagers.put(manager,null);
 		return manager;
 	}
 
@@ -328,9 +339,9 @@ public class BshClassManager
 
 		// Try static and then object, if allowed
 		// Note that the Java compiler should not allow both.
-		Method method = (Method)resolvedStaticMethods.get( sk );
+		Method method = resolvedStaticMethods.get( sk );
 		if ( method == null && !onlyStatic)
-			method = (Method)resolvedObjectMethods.get( sk );
+			method = resolvedObjectMethods.get( sk );
 
 		if ( Interpreter.DEBUG )
 		{
@@ -350,10 +361,10 @@ public class BshClassManager
 	*/
 	protected void clearCaches() 
 	{
-    	absoluteNonClasses = new Hashtable();
-    	absoluteClassCache = new Hashtable();
-    	resolvedObjectMethods = new Hashtable();
-    	resolvedStaticMethods = new Hashtable();
+		absoluteNonClasses = new Hashtable<String,Object>();
+		absoluteClassCache = new Hashtable<String,Class>();
+		resolvedObjectMethods = new Hashtable<SignatureKey,Method>();
+		resolvedStaticMethods = new Hashtable<SignatureKey,Method>();
 	}
 
 	/**
@@ -489,7 +500,7 @@ public class BshClassManager
 		int i = baseName.indexOf("$");
 		if ( i != -1 )
 			baseName = baseName.substring(i+1);
-		String cur = (String)definingClassesBaseNames.get( baseName );
+		String cur = definingClassesBaseNames.get( baseName );
 		if ( cur != null )
 			throw new InterpreterError("Defining class problem: "+className 
 				+": BeanShell cannot yet simultaneously define two or more "
@@ -510,7 +521,7 @@ public class BshClassManager
 	*/
 	protected String getClassBeingDefined( String className ) {
 		String baseName = Name.suffix(className,1);
-		return (String)definingClassesBaseNames.get( baseName );
+		return definingClassesBaseNames.get( baseName );
 	}
 
 	/**
