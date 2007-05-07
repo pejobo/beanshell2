@@ -51,15 +51,13 @@ import java.io.PrintStream;
 */
 public class TargetError extends EvalError 
 {
-	Throwable target;
 	boolean inNativeCode;
 
 	public TargetError(
 		String msg, Throwable t, SimpleNode node, CallStack callstack, 
 		boolean inNativeCode )
 	{
-		super( msg, node, callstack );
-		target = t;
+		super( msg, node, callstack, t );
 		this.inNativeCode = inNativeCode;
 	}
 
@@ -71,6 +69,7 @@ public class TargetError extends EvalError
 	public Throwable getTarget()
 	{
 		// check for easy mistake
+		Throwable target = getCause();
 		if(target instanceof InvocationTargetException)
 			return((InvocationTargetException)target).getTargetException();
 		else
@@ -81,15 +80,7 @@ public class TargetError extends EvalError
 	{
 		return super.toString() 
 			+ "\nTarget exception: " + 
-			printTargetError( target );
-	}
-
-    public void printStackTrace() { 
-		printStackTrace( false, System.err );
-	}
-
-    public void printStackTrace( PrintStream out ) { 
-		printStackTrace( false, out );
+			printTargetError( getCause() );
 	}
 
     public void printStackTrace( boolean debug, PrintStream out ) {
@@ -97,7 +88,7 @@ public class TargetError extends EvalError
 			super.printStackTrace( out );
 			out.println("--- Target Stack Trace ---");
 		}
-		target.printStackTrace( out );
+		getCause().printStackTrace( out );
 	}
 
 	/**
@@ -107,7 +98,7 @@ public class TargetError extends EvalError
 	*/
 	public String printTargetError( Throwable t ) 
 	{
-		String s = target.toString();
+		String s = getCause().toString();
 
 		if ( Capabilities.canGenerateInterfaces() )
 			s += "\n" + xPrintTargetError( t );
