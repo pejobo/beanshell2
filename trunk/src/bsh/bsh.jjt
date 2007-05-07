@@ -186,13 +186,13 @@ public class Parser
 		The auto-generated Parser.generateParseException() method does not
 		provide line number info, therefore we do this.
 	*/
-	ParseException createParseException( String message )
+	ParseException createParseException( String message, Exception e )
 	{
 		Token errortok = token;
 		int line = errortok.beginLine, column = errortok.beginColumn;
 		String mess = (errortok.kind == 0) ? tokenImage[0] : errortok.image;
 		return new ParseException( "Parse error at line " + line 
-			+ ", column " + column + " : " + message );
+			+ ", column " + column + " : " + message, e );
 	}
 }
 
@@ -487,7 +487,7 @@ Modifiers Modifiers( int context, boolean lookahead ) :
 				if ( mods == null ) mods = new Modifiers(); 
 				mods.addModifier( context, getToken(0).image );
 			} catch ( IllegalStateException e ) { 
-				throw createParseException( e.getMessage() );
+				throw createParseException( e.getMessage(), e );
 			}
 	}
   )* {
@@ -980,7 +980,7 @@ void Literal() #Literal :
 				Integer.decode( literal ).intValue() );
 		} catch ( NumberFormatException e ) {
 			throw createParseException(
-				"Error or number too big for integer type: "+ literal );
+				"Error or number too big for integer type: "+ literal, e );
 		}
   }
 |
@@ -1006,7 +1006,7 @@ void Literal() #Literal :
 		try {
     		jjtThis.charSetup( x.image.substring(1, x.image.length() - 1) );
 		} catch ( Exception e ) {
-			throw createParseException("Error parsing character: "+x.image);
+			throw createParseException("Error parsing character: "+x.image, e);
 		}
     }
 |
@@ -1014,7 +1014,7 @@ void Literal() #Literal :
 		try {
 			jjtThis.stringSetup( x.image.substring(1, x.image.length() - 1) );
 		} catch ( Exception e ) {
-			throw createParseException("Error parsing string: "+x.image);
+			throw createParseException("Error parsing string: "+x.image, e);
 		}
     }
 |
