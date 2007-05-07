@@ -34,7 +34,8 @@
 package bsh;
 
 import java.lang.reflect.*;
-import java.util.Vector;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
 	All of the reflection API code lies here.  It is in the form of static
@@ -475,17 +476,21 @@ class Reflect
 				StringUtil.methodString(methodName, types)
 				+ " in '" + baseClass.getName() + "'" );
 
-		Method [] methods = getCandidateMethods(
-			baseClass, methodName, types.length, publicOnly );
+		List<Method> publicMethods = new ArrayList<Method>();
+		List<Method> nonPublicMethods = publicOnly ? null : new ArrayList<Method>();
+		gatherMethodsRecursive(
+			baseClass, methodName, types.length, publicMethods, nonPublicMethods );
 
 		if ( Interpreter.DEBUG )
 			Interpreter.debug("Looking for most specific method: "+methodName);
-		Method method = findMostSpecificMethod( types, methods );
+		Method method = findMostSpecificMethod( types, publicMethods );
+		if( method==null && nonPublicMethods!=null )
+			method = findMostSpecificMethod( types, nonPublicMethods );
 
 		return method;
 	}
 
-	/**
+	/*
 		Climb the class and interface inheritence graph of the type and collect
 		all methods matching the specified name and criterion.  If publicOnly
 		is true then only public methods in *public* classes or interfaces will
@@ -494,22 +499,8 @@ class Reflect
 		implements a public interface or derives from a public type.
 	 	<p/>
 
-	 	This method primarily just delegates to gatherMethodsRecursive()
-	 	@see #gatherMethodsRecursive(
-			Class, String, int, boolean, java.util.Vector)
+		preseving old comments for deleted getCandidateMethods() - fschmidt
 	*/
-	static Method[] getCandidateMethods(
-		Class baseClass, String methodName, int numArgs,
-		boolean publicOnly )
-	{
-		Vector  candidates = gatherMethodsRecursive(
-			baseClass, methodName, numArgs, publicOnly, null/*candidates*/);
-
-		// return the methods in an array
-		Method [] ma = new Method[ candidates.size() ];
-		candidates.copyInto( ma );
-		return ma;
-	}
 
 	/**
 		Accumulate all methods, optionally including non-public methods,
@@ -527,54 +518,42 @@ class Reflect
 
 		@return the candidate methods vector
 	*/
-	private static Vector gatherMethodsRecursive(
+	private static void gatherMethodsRecursive(
 		Class baseClass, String methodName, int numArgs,
-		boolean publicOnly, Vector candidates )
+		List<Method> publicMethods, List<Method> nonPublicMethods )
 	{
-		if ( candidates == null )
-			candidates = new Vector();
-
-		// Add methods of the current class to the vector.
+		// Add methods of the current class to the list.
 		// In public case be careful to only add methods from a public class
 		// and to use getMethods() instead of getDeclaredMethods()
 		// (This addresses secure environments)
-		if ( publicOnly ) {
-			if ( isPublic(baseClass) )
-				addCandidates( baseClass.getMethods(),
-					methodName, numArgs, publicOnly, candidates );
-		} else
-			addCandidates( baseClass.getDeclaredMethods(),
-				methodName, numArgs, publicOnly, candidates );
+		boolean isPublicClass = isPublic(baseClass);
+		if( isPublicClass || nonPublicMethods!=null ) {
+			Method[] methods = nonPublicMethods==null ?
+				baseClass.getMethods() : baseClass.getDeclaredMethods();
+			for( Method m : methods ) {
+				if (  m.getName().equals( methodName )
+					&& ( m.getParameterTypes().length == numArgs )
+				) {
+					if( isPublicClass && isPublic(m) ) {
+						publicMethods.add( m );
+					} else if( nonPublicMethods != null ) {
+						nonPublicMethods.add( m );
+					}
+				}
+			}
+		}
 
 		// Does the class or interface implement interfaces?
 		Class [] intfs = baseClass.getInterfaces();
 		for( int i=0; i< intfs.length; i++ )
 			gatherMethodsRecursive(  intfs[i],
-				methodName, numArgs, publicOnly, candidates );
+				methodName, numArgs, publicMethods, nonPublicMethods );
 
 		// Do we have a superclass? (interfaces don't, etc.)
 		Class superclass = baseClass.getSuperclass();
 		if ( superclass != null )
 			gatherMethodsRecursive( superclass,
-				methodName, numArgs, publicOnly, candidates );
-
-		return candidates;
-	}
-
-	private static Vector addCandidates(
-		Method [] methods, String methodName,
-		int numArgs, boolean publicOnly, Vector candidates  )
-	{
-		for ( int i = 0; i < methods.length; i++ )
-		{
-			Method m = methods[i];
-			if (  m.getName().equals( methodName )
-				&& ( m.getParameterTypes().length == numArgs )
-				&& ( !publicOnly || isPublic( m ) )
-			)
-				candidates.add( m );
-		}
-		return candidates;
+				methodName, numArgs, publicMethods, nonPublicMethods );
 	}
 
 	/**
@@ -667,16 +646,16 @@ class Reflect
 		@param methods the set of candidate method which differ only in the
 	 		types of their arguments.
 	*/
-	static Method findMostSpecificMethod(
-		Class[] idealMatch, Method[] methods )
+	private static Method findMostSpecificMethod(
+		Class[] idealMatch, List<Method> methods )
 	{
 		// copy signatures into array for findMostSpecificMethod()
-		Class [][] candidateSigs = new Class [ methods.length ][];
-		for(int i=0; i<methods.length; i++)
-			candidateSigs[i] = methods[i].getParameterTypes();
+		Class [][] candidateSigs = new Class [ methods.size() ][];
+		for(int i=0; i<candidateSigs.length; i++)
+			candidateSigs[i] = methods.get(i).getParameterTypes();
 
 		int match = findMostSpecificSignature( idealMatch, candidateSigs );
-		return match == -1 ? null : methods[match];
+		return match == -1 ? null : methods.get(match);
 	}
 
 	/**
