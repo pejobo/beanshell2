@@ -717,7 +717,7 @@ System.out.println("experiment: creating class manager");
 		if ( list == null ) {
 			methods.put(name, Collections.singletonList(method));
 		} else {
-			if( list.size() == 1 ) {
+			if( !(list instanceof ArrayList) ) {
 				list = new ArrayList<BshMethod>(list);
 				methods.put( name, list );
 			}
