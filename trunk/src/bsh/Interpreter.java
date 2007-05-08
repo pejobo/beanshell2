@@ -694,7 +694,7 @@ public class Interpreter
                 	e.printStackTrace();
                 throw new EvalError(
 					"Sourced file: "+sourceFileInfo+" unknown error: " 
-					+ e.getMessage(), node, callstack);
+					+ e.getMessage(), node, callstack, e);
             } catch(TokenMgrError e) {
                 throw new EvalError(
 					"Sourced file: "+sourceFileInfo+" Token Parsing Error: " 

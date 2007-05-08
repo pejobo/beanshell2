@@ -34,7 +34,11 @@
 
 package	bsh;
 
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Collections;
 
 import java.io.InputStream;
 import java.io.BufferedReader;
@@ -63,6 +67,7 @@ import java.lang.reflect.Field;
 	Thanks to Slava Pestov (of jEdit fame) for import caching enhancements.
 	Note: This class has gotten too big.  It should be broken down a bit.
 */
+// not at all thread-safe - fschmidt
 public class NameSpace 
 	implements java.io.Serializable, BshClassManager.Listener, 
 	NameSource
@@ -83,14 +88,14 @@ public class NameSpace
 	*/
 	private String nsName; 
     private NameSpace parent;
-    private Hashtable variables;
-    private Hashtable methods;
+    private Map<String,Variable> variables;
+    private Map<String,List<BshMethod>> methods;
 
-    protected Hashtable importedClasses;
-    private Vector importedPackages;
-    private Vector importedCommands;
-	private Vector importedObjects;
-	private Vector importedStatic;
+    protected Map<String,String> importedClasses;
+    private List<String> importedPackages;
+    private List<String> importedCommands;
+	private List<Object> importedObjects;
+	private List<Class> importedStatic;
 	private String packageName;
 
 	transient private BshClassManager classManager;
@@ -99,7 +104,7 @@ public class NameSpace
     private This thisReference;
 
 	/** Name resolver objects */
-    private Hashtable names;
+    private Map<String,Name> names;
 
 	/** The node associated with the creation of this namespace.
 		This is used support getInvocationLine() and getInvocationText(). */
@@ -153,7 +158,7 @@ public class NameSpace
 		are cached here (those which might be imported).  Qualified names are 
 		always absolute and are cached by BshClassManager.
 	*/
-    transient private Hashtable classCache;
+    transient private Map<String,Class> classCache;
 
 	// End instance data
 
@@ -298,8 +303,7 @@ public class NameSpace
 		String name, Object value, boolean strictJava, boolean recurse ) 
 		throws UtilEvalError 
 	{
-		if ( variables == null )
-			variables =	new Hashtable();
+		ensureVariables();
 
 		// primitives should have been wrapped
 		if ( value == null )
@@ -338,6 +342,11 @@ public class NameSpace
     	}
 	}
 
+	private void ensureVariables() {
+		if ( variables == null )
+			variables =	new HashMap<String,Variable>();
+	}
+
 	/**
 		Remove the variable from the namespace.
 	*/
@@ -358,7 +367,7 @@ public class NameSpace
 		if ( variables == null )
 			return new String [0];
 		else
-			return enumerationToStringArray( variables.keys() );
+			return variables.keySet().toArray(new String[0]);
 	}
 
 	/**
@@ -370,7 +379,7 @@ public class NameSpace
 		if ( methods == null )
 			return new String [0];
 		else
-			return enumerationToStringArray( methods.keys() );
+			return methods.keySet().toArray(new String[0]);
 	}
 
 	/**
@@ -380,41 +389,16 @@ public class NameSpace
 	*/
 	public BshMethod [] getMethods() 
 	{
-		if ( methods == null )
+		if ( methods == null ) {
 			return new BshMethod [0];
-		else
-			return flattenMethodCollection( methods.elements() );
+		} else {
+			List<BshMethod> ret = new ArrayList<BshMethod>();
+			for( List<BshMethod> list : methods.values() ) {
+				ret.addAll(list);
+			}
+			return ret.toArray(new BshMethod[0]);
+		}
 	}
-
-	private String [] enumerationToStringArray( Enumeration e ) {
-		Vector v = new Vector();
-		while ( e.hasMoreElements() )
-			v.addElement( e.nextElement() );
-		String [] sa = new String [ v.size() ];
-		v.copyInto( sa );
-		return sa;
-	}
-
-	/**
-		Flatten the vectors of overloaded methods to a single array.
-		@see #getMethods()
-	*/
-    private BshMethod [] flattenMethodCollection( Enumeration e ) {
-        Vector v = new Vector();
-        while ( e.hasMoreElements() ) {
-            Object o = e.nextElement();
-            if ( o instanceof BshMethod )
-                v.addElement( o );
-            else {
-                Vector ov = (Vector)o;
-                for(int i=0; i<ov.size(); i++)
-                    v.addElement( ov.elementAt( i ) );
-            }
-        }
-        BshMethod [] bma = new BshMethod [ v.size() ];
-        v.copyInto( bma );
-        return bma;
-    }
 
 	/**
 		Get the parent namespace.
@@ -608,11 +592,7 @@ System.out.println("experiment: creating class manager");
 	{
 		if ( variables == null )
 			return new Variable[0];
-		Variable [] vars = new Variable [ variables.size() ];
-		int i=0;
-		for( Enumeration e = variables.elements(); e.hasMoreElements(); )
-			vars[i++] = (Variable)e.nextElement();
-		return vars;
+		return variables.values().toArray(new Variable[0]);
 	}
 
 	/**
@@ -664,8 +644,7 @@ System.out.println("experiment: creating class manager");
 	{
 		//checkVariableModifiers( name, modifiers );
 
-		if ( variables == null )
-			variables =	new Hashtable();
+		ensureVariables();
 
 		// Setting a typed variable is always a local operation.
 		Variable existing = getVariableImpl( name, false/*recurse*/ );
@@ -731,20 +710,20 @@ System.out.println("experiment: creating class manager");
 		//checkMethodModifiers( method );
 
 		if ( methods == null )
-			methods = new Hashtable();
+			methods = new HashMap<String,List<BshMethod>>();
 
-		Object m = methods.get(name);
+		List<BshMethod> list = methods.get(name);
 
-		if ( m == null )
-			methods.put(name, method);
-		else 
-		if ( m instanceof BshMethod ) {
-			Vector v = new Vector();
-			v.addElement( m );
-			v.addElement( method );
-			methods.put( name, v );
-		} else // Vector
-			((Vector)m).addElement( method );
+		if ( list == null ) {
+			methods.put(name, Collections.singletonList(method));
+		} else {
+			if( list.size() == 1 ) {
+				list = new ArrayList<BshMethod>(list);
+				methods.put( name, list );
+			}
+			list.remove(method);
+			list.add( method );
+		}
     }
 
 	/**
@@ -781,33 +760,21 @@ System.out.println("experiment: creating class manager");
 		if ( method == null && isClass && !declaredOnly )
 			method = getImportedMethod( name, sig );
 
-		Object m = null;
 		if ( method == null && methods != null )
 		{
-			m = methods.get(name);
+			List<BshMethod> list = methods.get(name);
 
-			// m contains either BshMethod or Vector of BshMethod
-			if ( m != null ) 
+			if ( list != null ) 
 			{
-				// unwrap 
-				BshMethod [] ma;
-				if ( m instanceof Vector ) 
-				{
-					Vector vm = (Vector)m;
-					ma = new BshMethod[ vm.size() ];
-					vm.copyInto( ma );
-				} else
-					ma = new BshMethod[] { (BshMethod)m };
-
 				// Apply most specific signature matching
-				Class [][] candidates = new Class[ ma.length ][];
-				for( int i=0; i< ma.length; i++ )
-					candidates[i] = ma[i].getParameterTypes();
+				Class [][] candidates = new Class[ list.size() ][];
+				for( int i=0; i< candidates.length; i++ )
+					candidates[i] = list.get(i).getParameterTypes();
 
 				int match = 
 					Reflect.findMostSpecificSignature( sig, candidates );
 				if ( match != -1 )
-					method = ma[match];
+					method = list.get(match);
 			}
 		}
 
@@ -828,7 +795,7 @@ System.out.println("experiment: creating class manager");
     public void	importClass(String name)
     {
 		if ( importedClasses == null )
-			importedClasses = new Hashtable();
+			importedClasses = new HashMap<String,String>();
 
 		importedClasses.put( Name.suffix(name, 1), name );
 		nameSpaceChanged();
@@ -840,13 +807,12 @@ System.out.println("experiment: creating class manager");
     public void	importPackage(String name)
     {
 		if(importedPackages == null)
-			importedPackages = new Vector();
+			importedPackages = new ArrayList<String>();
 
 		// If it exists, remove it and add it at the end (avoid memory leak)
-		if ( importedPackages.contains( name ) )
-			importedPackages.remove( name );
+		importedPackages.remove( name );
 
-		importedPackages.addElement(name);
+		importedPackages.add(name);
 		nameSpaceChanged();
     }
 
@@ -860,7 +826,7 @@ System.out.println("experiment: creating class manager");
     public void	importCommands( String name )
     {
 		if ( importedCommands == null )
-			importedCommands = new Vector();
+			importedCommands = new ArrayList<String>();
 
 		// dots to slashes
 		name = name.replace('.','/');
@@ -872,10 +838,9 @@ System.out.println("experiment: creating class manager");
 			name = name.substring( 0, name.length()-1 );
 
 		// If it exists, remove it and add it at the end (avoid memory leak)
-		if ( importedCommands.contains( name ) )
-			importedCommands.remove( name );
+		importedCommands.remove( name );
 
-		importedCommands.addElement(name);
+		importedCommands.add(name);
 		nameSpaceChanged();
     }
 
@@ -918,7 +883,7 @@ System.out.println("experiment: creating class manager");
 			// loop backwards for precedence
 			for(int i=importedCommands.size()-1; i>=0; i--)
 			{
-				String path = (String)importedCommands.elementAt(i);
+				String path = importedCommands.get(i);
 
 				String scriptPath; 
 				if ( path.equals("/") )
@@ -961,7 +926,7 @@ System.out.println("experiment: creating class manager");
 		if ( importedObjects != null )
 		for(int i=0; i<importedObjects.size(); i++)
 		{
-			Object object = importedObjects.elementAt(i);
+			Object object = importedObjects.get(i);
 			Class clas = object.getClass();
 			Method method = Reflect.resolveJavaMethod( 
 				getClassManager(), clas, name, sig, false/*onlyStatic*/ );
@@ -973,7 +938,7 @@ System.out.println("experiment: creating class manager");
 		if ( importedStatic!= null )
 		for(int i=0; i<importedStatic.size(); i++)
 		{
-			Class clas = (Class)importedStatic.elementAt(i);
+			Class clas = importedStatic.get(i);
 			Method method = Reflect.resolveJavaMethod( 
 				getClassManager(), clas, name, sig, true/*onlyStatic*/ );
 			if ( method != null )
@@ -990,7 +955,7 @@ System.out.println("experiment: creating class manager");
 		if ( importedObjects != null )
 		for(int i=0; i<importedObjects.size(); i++)
 		{
-			Object object = importedObjects.elementAt(i);
+			Object object = importedObjects.get(i);
 			Class clas = object.getClass();
 			Field field = Reflect.resolveJavaField( 
 				clas, name, false/*onlyStatic*/ );
@@ -1003,7 +968,7 @@ System.out.println("experiment: creating class manager");
 		if ( importedStatic!= null )
 		for(int i=0; i<importedStatic.size(); i++)
 		{
-			Class clas = (Class)importedStatic.elementAt(i);
+			Class clas = importedStatic.get(i);
 			Field field = Reflect.resolveJavaField( 
 				clas, name, true/*onlyStatic*/ );
 			if ( field != null )
@@ -1058,7 +1023,7 @@ System.out.println("experiment: creating class manager");
 	*/
 	void cacheClass( String name, Class c ) {
 		if ( classCache == null ) {
-			classCache = new Hashtable();
+			classCache = new HashMap<String,Class>();
 			//cacheCount++; // debug
 		}
 
@@ -1110,7 +1075,7 @@ System.out.println("experiment: creating class manager");
 
 		// Check the cache
 		if (classCache != null) {
-			c =	(Class)classCache.get(name);
+			c =	classCache.get(name);
 
 			if ( c != null )
 				return c;
@@ -1159,7 +1124,7 @@ System.out.println("experiment: creating class manager");
 		// Try explicitly imported class, e.g. import foo.Bar;
 		String fullname = null;
 		if ( importedClasses != null )
-			fullname = (String)importedClasses.get(name);
+			fullname = importedClasses.get(name);
 		
 		// not sure if we should really recurse here for explicitly imported
 		// class in parent...  
@@ -1209,7 +1174,7 @@ System.out.println("experiment: creating class manager");
 		if ( importedPackages != null )
 			for(int i=importedPackages.size()-1; i>=0; i--)
 			{
-				String s = ((String)importedPackages.elementAt(i)) + "." + name;
+				String s = importedPackages.get(i) + "." + name;
 				Class c=classForName(s);
 				if ( c != null )
 					return c;
@@ -1244,39 +1209,31 @@ System.out.println("experiment: creating class manager");
 	*/
 	public String [] getAllNames() 
 	{
-		Vector vec = new Vector();
-		getAllNamesAux( vec );
-		String [] names = new String [ vec.size() ];
-		vec.copyInto( names );
-		return names;
+		List<String> list = new ArrayList<String>();
+		getAllNamesAux( list );
+		return list.toArray(new String[0]);
 	}
 
 	/**
 		Helper for implementing NameSource
 	*/
-	protected void getAllNamesAux( Vector vec ) 
+	protected void getAllNamesAux( List<String> list ) 
 	{
-		Enumeration varNames = variables.keys();
-		while( varNames.hasMoreElements() )
-			vec.addElement( varNames.nextElement() );
-
-		Enumeration methodNames = methods.keys();
-		while( methodNames.hasMoreElements() )
-			vec.addElement( methodNames.nextElement() );
-
+		list.addAll( variables.keySet() );
+		list.addAll( methods.keySet() );
 		if ( parent != null )
-			parent.getAllNamesAux( vec );
+			parent.getAllNamesAux( list );
 	}
 
-	Vector nameSourceListeners;
+	List<NameSource.Listener> nameSourceListeners;
 	/**
 		Implements NameSource
 		Add a listener who is notified upon changes to names in this space.
 	*/
 	public void addNameSourceListener( NameSource.Listener listener ) {
 		if ( nameSourceListeners == null )
-			nameSourceListeners = new Vector();
-		nameSourceListeners.addElement( listener );
+			nameSourceListeners = new ArrayList<NameSource.Listener>();
+		nameSourceListeners.add( listener );
 	}
 	
 	/**
@@ -1424,9 +1381,9 @@ System.out.println("experiment: creating class manager");
 	Name getNameResolver( String ambigname ) 
 	{
 		if ( names == null )
-			names = new Hashtable();
+			names = new HashMap<String,Name>();
 
-		Name name = (Name)names.get( ambigname );
+		Name name = names.get( ambigname );
 
 		if ( name == null ) {
 			name = new Name( this, ambigname );
@@ -1501,13 +1458,12 @@ System.out.println("experiment: creating class manager");
 	public void importObject( Object obj ) 
 	{
 		if ( importedObjects == null )
-			importedObjects = new Vector();
+			importedObjects = new ArrayList<Object>();
 
 		// If it exists, remove it and add it at the end (avoid memory leak)
-		if ( importedObjects.contains( obj ) )
-			importedObjects.remove( obj );
+		importedObjects.remove( obj );
 
-		importedObjects.addElement( obj );
+		importedObjects.add( obj );
 		nameSpaceChanged();
 
 	}
@@ -1517,13 +1473,12 @@ System.out.println("experiment: creating class manager");
 	public void importStatic( Class clas ) 
 	{
 		if ( importedStatic == null )
-			importedStatic = new Vector();
+			importedStatic = new ArrayList<Class>();
 
 		// If it exists, remove it and add it at the end (avoid memory leak)
-		if ( importedStatic.contains( clas ) )
-			importedStatic.remove( clas );
+		importedStatic.remove( clas );
 
-		importedStatic.addElement( clas );
+		importedStatic.add( clas );
 		nameSpaceChanged();
 	}
 
