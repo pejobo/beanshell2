@@ -79,8 +79,6 @@ import java.lang.reflect.Modifier;
 */
 public class BshClassManager
 {
-	/** Identifier for no value item.  Use a hashtable as a Set. */
-	private static final Object NOVALUE = new Object(); 
 	/** 
 		The interpreter which created the class manager 
 		This is used to load scripted classes from source files.
@@ -103,7 +101,7 @@ public class BshClassManager
 		Note: these should probably be re-implemented with Soft references.
 		(as opposed to strong or Weak)
 	*/
-    protected transient Map<String,Object> absoluteNonClasses = new Hashtable<String,Object>();
+    protected transient Set<String> absoluteNonClasses = Collections.synchronizedSet(new HashSet<String>());
 
 	/**
 		Caches for resolved object and static methods.
@@ -113,7 +111,7 @@ public class BshClassManager
 	protected transient volatile Map<SignatureKey,Method> resolvedObjectMethods = new Hashtable<SignatureKey,Method>();
 	protected transient volatile Map<SignatureKey,Method> resolvedStaticMethods = new Hashtable<SignatureKey,Method>();
 
-	protected transient Map<String,Object> definingClasses = new Hashtable<String,Object>();
+	private transient Set<String> definingClasses = Collections.synchronizedSet(new HashSet<String>());
 	protected transient Map<String,String> definingClassesBaseNames = new Hashtable<String,String>();
 
 	private static final Map<BshClassManager,Object> classManagers = Collections.synchronizedMap(new WeakHashMap<BshClassManager,Object>());
@@ -137,19 +135,9 @@ public class BshClassManager
 	{
 		BshClassManager manager;
 
-		// Do we have the necessary jdk1.2 packages and optional package?
-		if ( Capabilities.classExists("java.lang.ref.WeakReference") 
-			&& Capabilities.classExists("java.util.HashMap") 
-			&& Capabilities.classExists("bsh.classpath.ClassManagerImpl") 
-		) 
-			try {
-				// Try to load the module
-				// don't refer to it directly here or we're dependent upon it
-				Class clas = Class.forName( "bsh.classpath.ClassManagerImpl" );
-				manager = (BshClassManager)clas.newInstance();
-			} catch ( Exception e ) {
-				throw new InterpreterError("Error loading classmanager: "+e);
-			}
+		// Do we have the optional package?
+		if ( Capabilities.classExists("bsh.classpath.ClassManagerImpl") ) 
+			manager = new bsh.classpath.ClassManagerImpl();
 		else 
 			manager = new BshClassManager();
 
@@ -304,7 +292,7 @@ public class BshClassManager
 		if ( value != null )
 			absoluteClassCache.put( name, value );
 		else
-			absoluteNonClasses.put( name, NOVALUE );
+			absoluteNonClasses.add( name );
 	}
 
 	/**
@@ -361,7 +349,7 @@ public class BshClassManager
 	*/
 	protected void clearCaches() 
 	{
-		absoluteNonClasses = new Hashtable<String,Object>();
+		absoluteNonClasses = Collections.synchronizedSet(new HashSet<String>());
 		absoluteClassCache = new Hashtable<String,Class>();
 		resolvedObjectMethods = new Hashtable<SignatureKey,Method>();
 		resolvedStaticMethods = new Hashtable<SignatureKey,Method>();
@@ -507,12 +495,12 @@ public class BshClassManager
 				+"dependant classes of the same name.  Attempt to define: "
 				+ className +" while defining: "+cur 
 			);
-		definingClasses.put( className, NOVALUE );
+		definingClasses.add( className );
 		definingClassesBaseNames.put( baseName, className );
 	}
 
 	protected boolean isClassBeingDefined( String className ) {
-		return definingClasses.get( className ) != null;
+		return definingClasses.contains( className );
 	}
 
 	/**
