@@ -5,10 +5,8 @@ import java.util.*;
 
 /**
 	 Implementation of the enhanced for(:) statement.  
-	 This statement uses BshIterable to support iteration over a wide variety
-	 of iterable types.  Under JDK 1.1 this statement supports primitive and 
-	 Object arrays, Vectors, and enumerations.  Under JDK 1.2 and later it 
-	 additionally supports collections.
+	 This statement uses Iterator to support iteration over a wide variety
+	 of iterable types.
 
 	 @author Daniel Leuck 
 	 @author Pat Niemeyer
@@ -56,7 +54,7 @@ class BSHEnhancedForStatement extends SimpleNode implements ParserConstants
 		if ( !cm.isBshIterable( iteratee ) )
 			throw new EvalError("Can't iterate over type: "
 				+iteratee.getClass(), this, callstack );
-		BshIterator iterator = cm.getBshIterator( iteratee );
+		Iterator iterator = cm.getBshIterator( iteratee );
 		
 		Object returnControl = Primitive.VOID;
         while( iterator.hasNext() )
