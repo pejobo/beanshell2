@@ -225,10 +225,6 @@ public class ClassManagerImpl extends BshClassManager
 				c = plainClassForName( name );
 			} catch ( ClassNotFoundException e ) {}
 
-		// Try scripted class
-		if ( c == null )
-			c = loadSourceClass( name );
-
 		// Cache result (or null for not found)
 		// Note: plainClassForName already caches, so it will be redundant
 		// in that case, however this process only happens once
