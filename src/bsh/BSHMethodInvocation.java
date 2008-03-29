@@ -76,7 +76,7 @@ class BSHMethodInvocation extends SimpleNode
 		} catch ( ReflectError e ) {
 			throw new EvalError(
 				"Error in method invocation: " + e.getMessage(), 
-				this, callstack );
+				this, callstack, e );
 		} catch ( InvocationTargetException e ) 
 		{
 			String msg = "Method Invocation "+name;
