@@ -464,7 +464,7 @@ public class NameSpace
 		over child interpreters and going to the parent for the declaring 
 		interpreter, so we'd be sure to get the top interpreter.
 	*/
-    This getThis( Interpreter declaringInterpreter ) 
+    public This getThis( Interpreter declaringInterpreter ) 
 	{
 		if ( thisReference == null )
 			thisReference = This.getThis( this, declaringInterpreter );
