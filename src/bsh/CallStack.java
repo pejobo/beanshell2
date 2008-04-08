@@ -33,7 +33,8 @@
 
 package bsh;
 
-import java.util.Vector;
+import java.util.Stack;
+import java.util.EmptyStackException;
 
 /**
 	A stack of NameSpaces representing the call path.
@@ -43,10 +44,6 @@ import java.util.Vector;
 
 	This is used to support the this.caller magic reference and to print
 	script "stack traces" when evaluation errors occur.
-	<p>
-
-	Note: it would be awefully nice to use the java.util.Stack here.
-	Sigh... have to stay 1.1 compatible.
 	<p>
 
 	Note: How can this be thread safe, you might ask?  Wouldn't a thread 
@@ -59,9 +56,9 @@ import java.util.Vector;
 	it exposes) creates a new CallStack for each external call.
 	<p>
 */
-public class CallStack 
+public final class CallStack 
 {
-	private Vector stack = new Vector(2);
+	private final Stack<NameSpace> stack = new Stack<NameSpace>();
 
 	public CallStack() { }
 
@@ -74,21 +71,22 @@ public class CallStack
 	}
 
 	public void push( NameSpace ns ) {
-		stack.insertElementAt( ns, 0 );
+		stack.push( ns );
 	}
 
 	public NameSpace top() {
-		return get(0);
+		return stack.peek();
 	}
 
 	/**
 		zero based.
 	*/
 	public NameSpace get(int depth) {
-		if ( depth >= depth() )
+		int size = stack.size();
+		if ( depth >= size )
 			return NameSpace.JAVACODE;
 		else
-			return (NameSpace)(stack.elementAt(depth));
+			return stack.get(size-1-depth);
 	}
 	
 	/**
@@ -96,15 +94,15 @@ public class CallStack
 		zero based.
 	*/
 	public void set(int depth, NameSpace ns) {
-		stack.setElementAt(ns, depth );
+		stack.set( stack.size()-1-depth, ns );
 	}
 
 	public NameSpace pop() {
-		if ( depth() < 1 )
+		try {
+			return stack.pop();
+		} catch(EmptyStackException e) {
 			throw new InterpreterError("pop on empty CallStack");
-		NameSpace top = top();
-		stack.removeElementAt(0);
-		return top;
+		}
 	}
 
 	/**
@@ -112,27 +110,27 @@ public class CallStack
 		value.
 	*/
 	public NameSpace swap( NameSpace newTop ) {
-		NameSpace oldTop = (NameSpace)(stack.elementAt(0));
-		stack.setElementAt( newTop, 0 );
+		int last = stack.size() - 1;
+		NameSpace oldTop = stack.get(last);
+		stack.set( last, newTop );
 		return oldTop;
 	}
 
 	public int depth() {
 		return stack.size();
 	}
-
+/*
 	public NameSpace [] toArray() {
 		NameSpace [] nsa = new NameSpace [ depth() ];
 		stack.copyInto( nsa );
 		return nsa;
 	}
-
+*/
 	public String toString() {
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		sb.append("CallStack:\n");
-		NameSpace [] nsa = toArray();
-		for(int i=0; i<nsa.length; i++)
-			sb.append("\t"+nsa[i]+"\n");
+		for( int i=stack.size()-1; i>=0; i-- )
+			sb.append("\t"+stack.get(i)+"\n");
 
 		return sb.toString();
 	}
@@ -143,7 +141,7 @@ public class CallStack
 	*/
 	public CallStack copy() {
 		CallStack cs = new CallStack();
-		cs.stack = (Vector)this.stack.clone();
+		cs.stack.addAll(this.stack);
 		return cs;
 	}
 }

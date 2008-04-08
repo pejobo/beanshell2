@@ -352,7 +352,7 @@ public class JConsole extends JScrollPane
 		String prompt = line.substring( i+1, cmdStart );
 
 		// Show ambiguous
-		StringBuffer sb = new StringBuffer("\n");
+		StringBuilder sb = new StringBuilder("\n");
 		for( i=0; i<complete.length && i<SHOW_AMBIG_MAX; i++)
 			sb.append( complete[i] +"\n" );
 		if ( i == SHOW_AMBIG_MAX )
@@ -461,7 +461,7 @@ public class JConsole extends JScrollPane
 	{
 		// Patch to handle Unicode characters
 		// Submitted by Daniel Leuck
-		StringBuffer buf = new StringBuffer(); 
+		StringBuilder buf = new StringBuilder(); 
 		int lineLength = line.length(); 
 		for(int i=0; i<lineLength; i++) {  
 				String val = Integer.toString(line.charAt(i), 16); 
