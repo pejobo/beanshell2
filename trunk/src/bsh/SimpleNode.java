@@ -206,7 +206,7 @@ class SimpleNode implements Node
 	*/
 	public String getText() 
 	{
-		StringBuffer text = new StringBuffer();
+		StringBuilder text = new StringBuilder();
 		Token t = firstToken;
 		while ( t!=null ) {
 			text.append(t.image);
