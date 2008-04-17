@@ -704,7 +704,7 @@ System.out.println("experiment: creating class manager");
 		@see Interpreter#source( String )
 		@see Interpreter#eval( String )
 	*/
-    public void	setMethod( String name, BshMethod method )
+    public void	setMethod( BshMethod method )
 		throws UtilEvalError
 	{
 		//checkMethodModifiers( method );
@@ -712,6 +712,7 @@ System.out.println("experiment: creating class manager");
 		if ( methods == null )
 			methods = new HashMap<String,List<BshMethod>>();
 
+		String name = method.getName();
 		List<BshMethod> list = methods.get(name);
 
 		if ( list == null ) {

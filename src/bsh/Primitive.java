@@ -34,7 +34,8 @@
 
 package bsh;
 
-import java.util.Hashtable;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
     Wrapper for primitive types in Bsh.  This is package public because it 
@@ -70,7 +71,7 @@ public final class Primitive implements ParserConstants, java.io.Serializable
 		wrapperToPrimitive.put( Double.class, Double.TYPE );
 	}
 	*/
-	static Hashtable wrapperMap = new Hashtable();
+	static final Map<Class,Class> wrapperMap = new HashMap<Class,Class>();
 	static {
 		wrapperMap.put( Boolean.TYPE, Boolean.class );
 		wrapperMap.put( Byte.TYPE, Byte.class );
@@ -897,7 +898,7 @@ public final class Primitive implements ParserConstants, java.io.Serializable
 	*/
 	public static Class boxType( Class primitiveType )
 	{
-		Class c = (Class)wrapperMap.get( primitiveType );
+		Class c = wrapperMap.get( primitiveType );
 		if ( c != null )
 			return c;
 		throw new InterpreterError( 
@@ -911,7 +912,7 @@ public final class Primitive implements ParserConstants, java.io.Serializable
 	*/
 	public static Class unboxType( Class wrapperType )
 	{
-		Class c = (Class)wrapperMap.get( wrapperType );
+		Class c = wrapperMap.get( wrapperType );
 		if ( c != null )
 			return c;
 		throw new InterpreterError( 
