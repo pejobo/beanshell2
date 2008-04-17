@@ -311,8 +311,9 @@ public final class This implements java.io.Serializable, Runnable
 			Class Generator.java.  If we fix that then we can remove this.
 			(just have to generate the code there.)
 		*/
-		if ( args != null )
-		{
+		if ( args == null ) {
+			args = new Object[0];
+		} else {
 			Object [] oa = new Object [args.length];
 			for(int i=0; i<args.length; i++)
 				oa[i] = ( args[i] == null ? Primitive.NULL : args[i] );
@@ -348,17 +349,33 @@ public final class This implements java.io.Serializable, Runnable
 			a default impl.
 		*/
 		// a default toString() that shows the interfaces we implement
-		if ( methodName.equals("toString" ) )
+		if ( methodName.equals("toString") && args.length==0 )
 			return toString();
 
 		// a default hashCode()
-		if ( methodName.equals("hashCode" ) )
+		if ( methodName.equals("hashCode") && args.length==0 )
 			return new Integer(this.hashCode());
 
 		// a default equals() testing for equality with the This reference
-		if ( methodName.equals("equals" ) ) {
+		if ( methodName.equals("equals") && args.length==1 ) {
 			Object obj = args[0];
 			return new Boolean( this == obj );
+		}
+
+		// a default clone()
+		if ( methodName.equals("clone") && args.length==0 ) {
+			NameSpace ns = new NameSpace(namespace,namespace.getName()+" clone");
+			try {
+				for( String varName : namespace.getVariableNames() ) {
+					ns.setLocalVariable(varName,namespace.getVariable(varName,false),false);
+				}
+				for( BshMethod method : namespace.getMethods() ) {
+					ns.setMethod(method);
+				}
+			} catch ( UtilEvalError e ) {
+				throw e.toEvalError( SimpleNode.JAVACODE, callstack ); 
+			}
+			return ns.getThis(declaringInterpreter);
 		}
 
 		// Look for a default invoke() handler method in the namespace

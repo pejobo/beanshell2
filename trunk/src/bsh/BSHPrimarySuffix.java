@@ -128,7 +128,7 @@ class BSHPrimarySuffix extends SimpleNode
 		}
 		catch(ReflectError e)
 		{
-			throw new EvalError("reflection error: " + e, this, callstack );
+			throw new EvalError("reflection error: " + e, this, callstack, e );
 		}
 		catch(InvocationTargetException e)
 		{
