@@ -24,8 +24,6 @@
 	- Override 
 		getErrorLineNumber()
 		getErrorText()
-	- Add
-		toString()
 
 */
 
@@ -42,12 +40,12 @@ package bsh;
  */
  
 // Begin BeanShell Modification - public, extend EvalError
-public class ParseException extends EvalError {
+public final class ParseException extends EvalError {
 // End BeanShell Modification - public, extend EvalError
 
 	// Begin BeanShell Modification - sourceFile
 
-	String sourceFile = "<unknown>";
+	private String sourceFile = "<unknown>";
 
 	/**
 		Used to add source file info to exception
@@ -169,7 +167,7 @@ public class ParseException extends EvalError {
   public String getMessage( boolean debug ) {
   // End BeanShell Modification - added debug param
     if (!specialConstructor) {
-      return super.getMessage();
+      return super.getRawMessage();
     }
     String expected = "";
     int maxSize = 0;
@@ -300,10 +298,6 @@ public class ParseException extends EvalError {
 		}
 		
 		return retval;
-	}
-
-	public String toString() {
-		return getMessage();
 	}
 
 	// End BeanShell Modification - override error methods and toString
