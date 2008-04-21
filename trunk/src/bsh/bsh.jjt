@@ -645,7 +645,7 @@ void ReturnType() #ReturnType :
 {
   "void" { jjtThis.isVoid = true; }
 |
-  Type()
+  Type() [ TypeArguments() ]
 }
 
 void PrimitiveType() #PrimitiveType :
