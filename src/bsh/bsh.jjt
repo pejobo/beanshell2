@@ -194,6 +194,60 @@ public class Parser
 		return new ParseException( "Parse error at line " + line 
 			+ ", column " + column + " : " + message, e );
 	}
+
+	int parseInt(String s) throws NumberFormatException {
+		int radix;
+		int i;
+		if( s.startsWith("0x") || s.startsWith("0X") ) {
+			radix = 16;
+			i = 2;
+		} else if( s.startsWith("0") && s.length() > 1 ) {
+			radix = 8;
+			i = 1;
+		} else {
+			radix = 10;
+			i = 0;
+		}
+		int result = 0;
+		int len = s.length();
+		for( ; i<len; i++ ) {
+			if( result < 0 )
+				throw new NumberFormatException("Number too big for integer type: "+s);
+			result *= radix;
+			int digit = Character.digit(s.charAt(i),radix);
+			if( digit < 0 )
+				throw new NumberFormatException("Invalid integer type: "+s);
+			result += digit;
+		}
+		return result;
+	}
+
+	long parseLong(String s) throws NumberFormatException {
+		int radix;
+		int i;
+		if( s.startsWith("0x") || s.startsWith("0X") ) {
+			radix = 16;
+			i = 2;
+		} else if( s.startsWith("0") && s.length() > 1 ) {
+			radix = 8;
+			i = 1;
+		} else {
+			radix = 10;
+			i = 0;
+		}
+		long result = 0;
+		int len = s.length();
+		for( ; i<len; i++ ) {
+			if( result < 0L )
+				throw new NumberFormatException("Number too big for long type: "+s);
+			result *= radix;
+			int digit = Character.digit(s.charAt(i),radix);
+			if( digit < 0 )
+				throw new NumberFormatException("Invalid long type: "+s);
+			result += digit;
+		}
+		return result;
+	}
 }
 
 PARSER_END(Parser)
@@ -975,18 +1029,17 @@ void Literal() #Literal :
     if(ch == 'l' || ch == 'L')
     {
         literal = literal.substring(0,literal.length()-1);
-
-        // This really should be Long.decode, but there isn't one. As a result,
-        // hex and octal literals ending in 'l' or 'L' don't work.
-        jjtThis.value = new Primitive( new Long( literal ).longValue() );
+		try {
+        	jjtThis.value = new Primitive( parseLong(literal) );
+		} catch ( NumberFormatException e ) {
+			throw createParseException( e.getMessage(), e );
+		}
     }
     else
 		try {
-        	jjtThis.value = new Primitive( 
-				Integer.decode( literal ).intValue() );
+        	jjtThis.value = new Primitive( parseInt(literal) );
 		} catch ( NumberFormatException e ) {
-			throw createParseException(
-				"Error or number too big for integer type: "+ literal, e );
+			throw createParseException( e.getMessage(), e );
 		}
   }
 |
