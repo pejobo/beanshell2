@@ -10,7 +10,7 @@
 		- Why can't I nest filesets?  This seems like it would be so easy and
 		useful...
 -->
-<project name="beanshell" default="compile" basedir=".">
+<project name="beanshell" default="compile-all" basedir=".">
 
 <!-- Project Configuration -->
 
@@ -27,6 +27,7 @@
 
 	<property name="src-dir" value="src" />
 	<property name="build-dir" value="classes" />
+	<property name="test-build-dir" value="${build-dir}/tests" />
 	<property name="lib-dir" value="lib" />
 	<property name="dist-dir" value="dist" />
 	<property name="test-src-dir" value="tests/src" />
@@ -149,10 +150,42 @@
 		</java>
 	</target>
 
+	<target name="compile-all" depends="compile-tests, compile"/>
+
+	<target name="compile-tests">
+	  <mkdir dir="${test-build-dir}"/>
+	  <javac srcdir="${test-src-dir}"
+			destdir="${test-build-dir}"
+			deprecation="${deprecation}"
+			optimize="on"
+			debug="on"
+			includes="**/*.java"
+			excludes="${excludes},**/bak/**"
+		>
+			<classpath>
+				<fileset refid="lib-fileset"/>
+			</classpath>
+		</javac>
+
+		<copy todir="${test-build-dir}">
+
+			<!-- install bsh commands used in tests -->
+			<fileset dir="${test-src-dir}">
+				<patternset>
+					<include name="**/*.bsh"/>
+				</patternset>
+			</fileset>
+		</copy>
+		<tstamp>
+			<format property="DATE" pattern="yyyy-MM-dd hh:mm:ss" />
+		</tstamp>
+	</target>
+
 	<target name="compile" depends="jjtree,javacc,builddir">
 		<!-- exclude the ${excludes} as well as anything under a "bak" dir -->
 		<!--compiler="${build-compiler}"-->
-		<javac srcdir="${src-dir}:${test-src-dir}:${bsf-src-dir}"
+		
+		<javac srcdir="${src-dir}:${bsf-src-dir}"
 			destdir="${build-dir}"
 			deprecation="${deprecation}"
 			optimize="on"
@@ -174,13 +207,6 @@
 <!-- need to break this into a separate target to use exclude -->
 				<!-- install the servlet stuff -->
 				<patternset refid="bshservlet-patternset"/>
-			</fileset>
-
-			<!-- install bsh commands used in tests -->
-			<fileset dir="${test-src-dir}">
-				<patternset>
-					<include name="**/*.bsh"/>
-				</patternset>
 			</fileset>
 		</copy>
 		<tstamp>
@@ -408,7 +434,7 @@
 	</target>
 	
 	<!-- Make all of the dist jars -->
-	<target name="dist" depends="_distdir,compile,jarcore,jarall,javadoc,zipsrc,bshservlet-war,bshservlet-wbsh-war,bshdoc">
+	<target name="dist" depends="_distdir,compile-all,jarcore,jarall,javadoc,zipsrc,bshservlet-war,bshservlet-wbsh-war,bshdoc">
 
 		<antcall target="jarfileset">
 			<param name="target-jar" value="${commands-jar}"/>
@@ -594,7 +620,7 @@
 	<!-- 
 		Run the bsh test suite.
 	-->
-	<target name="test">
+	<target name="test" depends="compile-tests">
 		<antcall target="bsh">
 			<param name="file" value="tests/test-scripts/RunAllTests.bsh"/>
 		</antcall>
