@@ -150,9 +150,9 @@
 		</java>
 	</target>
 
-	<target name="compile-all" depends="compile-tests, compile"/>
+	<target name="compile-all" depends="compile, compile-tests"/>
 
-	<target name="compile-tests">
+	<target name="compile-tests" depends="compile">
 	  <mkdir dir="${test-build-dir}"/>
 	  <javac srcdir="${test-src-dir}"
 			destdir="${test-build-dir}"
@@ -164,6 +164,7 @@
 		>
 			<classpath>
 				<fileset refid="lib-fileset"/>
+				<pathelement path="${build-dir}"/>
 			</classpath>
 		</javac>
 
