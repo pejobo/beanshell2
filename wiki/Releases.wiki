@@ -3,7 +3,7 @@
 
 = Introduction =
 
-Up to now there are no release plans. We should make some!
+Up to now there are no release plans. We should make one!
 
 = Details =
 
