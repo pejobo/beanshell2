@@ -1,0 +1,28 @@
+#summary Release plans
+#labels Phase-Requirements
+
+= Introduction =
+
+Up to now there are no release plans. We should make some!
+
+= Details =
+
+So we could
+ * gain more attention
+ * increase the user base (svn checkout and building is a too high barrier for most, and even if they do, they will never know what they get)
+
+I suggest to make a release soon, for the above mentioned reasons.
+We could name it either something below 1.0 (since it's beanshell2 not beanshell) and targeting 1.0 as next major release. 
+
+A first bugfix release would be fine.
+
+Or we could follow the old numbering scheme - dunno what this excactly means. Guess the next release then would be 2.0b5 and the long time target would be 2.1 or 3.0.
+
+We also need a long time plan where we specify
+ * how we treat backward compatibility (to 'old' scripts)
+ * which features are planned (and for which release) 
+
+Possible long time targets could be:
+ * build-in jsr-233 support, inluding an ast based javax.script.Compilable support
+ * varargs support
+ * ??
