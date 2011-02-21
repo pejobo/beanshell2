@@ -1,0 +1,21 @@
+#summary One-sentence summary of this page.
+
+= Introduction =
+
+This is a summary of failing tests (with revision r41) with links to the corresponding issues if there is ony.
+
+
+= Details =
+
+Produced with
+{{{
+ ant test
+}}}
+
+ # class13.bsh [http://code.google.com/p/beanshell2/issues/detail?id=7 item 7]
+ # class3.bsh [http://code.google.com/p/beanshell2/issues/detail?id=8 item 8]
+ # classinterf1.bsh
+ # commands.bsh
+ # run.bsh
+
+Item 3 to 5 need further investigation. Also they should be ported to unit tests (like all test scripts).
