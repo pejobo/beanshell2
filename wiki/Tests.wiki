@@ -18,4 +18,14 @@ Produced with
  # commands.bsh
  # run.bsh
 
-Item 3 to 5 need further investigation. Also they should be ported to unit tests (like all test scripts).
+Item 3 to 5 need further investigation. ~~Also they should be ported to unit tests (like all test scripts).~~ ,,done,,
+
+After porting to JUnit with revision r46 the list is now
+
+ # class3.bsh issue#8
+ # classinterf1.bsh
+ # commands.bsh
+ # import.bsh
+ # run.bsh
+
+So "import.bsh" is new, and "class13.bsh" has vanished.
