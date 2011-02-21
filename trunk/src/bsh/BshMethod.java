@@ -427,19 +427,37 @@ public class BshMethod
 
 	// equal signature
 	public boolean equals(Object o) {
-		if( !(o instanceof BshMethod) )
+		if (o == null) {
 			return false;
-		BshMethod m = (BshMethod)o;
-		if( !name.equals(m.name) || numArgs!=m.numArgs )
-			return false;
-		for( int i=0; i<numArgs; i++ ) {
-			if( !equal(cparamTypes[i],m.cparamTypes[i]) )
-				return false;
 		}
-		return true;
+		if (o == this) {
+			return true;
+		}
+		if (o.getClass() == this.getClass()) {
+			BshMethod m = (BshMethod)o;
+			if( !name.equals(m.name) || numArgs!=m.numArgs )
+				return false;
+			for( int i=0; i<numArgs; i++ ) {
+				if( !equal(cparamTypes[i],m.cparamTypes[i]) )
+					return false;
+			}
+			return true;
+		}
+		return false;
 	}
+
 
 	private static boolean equal(Object obj1,Object obj2) {
 		return obj1==null ? obj2==null : obj1.equals(obj2);
+	}
+
+
+	@Override
+	public int hashCode() {
+		int h = name.hashCode();
+		for (Class<?> cparamType : cparamTypes) {
+			h = h * 31 + cparamType.hashCode();
+		}
+		return h;
 	}
 }
