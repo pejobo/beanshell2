@@ -12,15 +12,15 @@ Produced with
  ant test
 }}}
 
- # class13.bsh [http://code.google.com/p/beanshell2/issues/detail?id=7 item 7]
- # class3.bsh [http://code.google.com/p/beanshell2/issues/detail?id=8 item 8]
+ # class13.bsh issue#7
+ # class3.bsh issue#8
  # classinterf1.bsh
  # commands.bsh
  # run.bsh
 
 Item 3 to 5 need further investigation. ~~Also they should be ported to unit tests (like all test scripts).~~ ,,done,,
 
-After porting to JUnit with revision r46 the list is now
+After porting to JUnit with revision r46 the list is now ,,produced with "ant clean compile junit-tests",,
 
  # class3.bsh issue#8
  # classinterf1.bsh
