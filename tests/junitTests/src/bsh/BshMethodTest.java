@@ -2,7 +2,6 @@ package bsh;
 
 import junit.framework.Assert;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class BshMethodTest {
@@ -13,7 +12,6 @@ public class BshMethodTest {
     */
    @SuppressWarnings("serial")
    @Test
-   @Ignore("Fails: see defect #28")
    public void testEqualsObject_subclassEquality() {
       // define a simple subclass of BshMethod:
       class SubMethod extends BshMethod {
@@ -24,7 +22,6 @@ public class BshMethodTest {
                   declaringNameSpace, modifiers);
          }
       }
-      ;
 
       final String name = "testMethod";
       final BshMethod subInst =
@@ -42,7 +39,6 @@ public class BshMethodTest {
     * Very simple test to verify hashcode contract.
     */
    @Test
-   @Ignore("Fails: see defect #28")
    public void testHashCode_contract() {
       final String name = "testMethod";
       final BshMethod method1 = new BshMethod(name, 
