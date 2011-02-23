@@ -25,8 +25,8 @@ After porting to JUnit with revision r46 the list of failing tests is now ,,prod
  # class3.bsh issue#8
  # classinterf1.bsh
  # commands.bsh
- # import.bsh
- # run.bsh
+ # ~~import.bsh~~ fixed with r51
+ # ~~run.bsh~~ fixed with r51
  # !InterpreterConcurrencyTest.java issue#40
 
 So for the scripted tasks "import.bsh" is new, and "class13.bsh" has vanished.
