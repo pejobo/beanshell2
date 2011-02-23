@@ -1,32 +1,21 @@
-#summary summary of failing tests
+#summary unit tests
 
 = Introduction =
 
-This is a summary of failing tests (with revision r41) with links to the corresponding issues if there is ony.
-
+This is a summary of the beanshell2 test infrastructure, listing open issues and mapping these to test scripts or unit tests.
 
 = Details =
 
-Produced with
-{{{
- ant test
-}}}
+Old test-srcipts 'inherited' from Beanshell.org are executed by the test class `/tests/junitTests/src/bsh/OldScriptsTest.java`.
 
- # class13.bsh issue#7
- # class3.bsh issue#8
- # classinterf1.bsh
- # commands.bsh
- # run.bsh
+List of failing test scripts (revision r46) is ,,produced with "ant clean compile junit-tests",,
 
-Item 3 to 5 need further investigation. ~~Also they should be ported to unit tests (like all test scripts).~~ ,,done,,
+ # [http://code.google.com/p/beanshell2/source/browse/trunk/tests/test-scripts/class3.bsh class3.bsh] - see issue#8
+ # [http://code.google.com/p/beanshell2/source/browse/trunk/tests/test-scripts/classinterf1.bsh classinterf1.bsh]
+ # [http://code.google.com/p/beanshell2/source/browse/trunk/tests/test-scripts/commands.bsh commands.bsh]
+ # ~~[http://code.google.com/p/beanshell2/source/browse/trunk/tests/test-scripts/import.bsh import.bsh]~~ - fixed with r51
+ # ~~[http://code.google.com/p/beanshell2/source/browse/trunk/tests/test-scripts/run.bsh run.bsh]~~ - fixed with r51
 
-After porting to JUnit with revision r46 the list of failing tests is now ,,produced with "ant clean compile junit-tests",,
+List of failing unit tests (revision r46) 
 
- # class3.bsh issue#8
- # classinterf1.bsh
- # commands.bsh
- # ~~import.bsh~~ fixed with r51
- # ~~run.bsh~~ fixed with r51
- # !InterpreterConcurrencyTest.java issue#40
-
-So for the scripted tasks "import.bsh" is new, and "class13.bsh" has vanished.
+ # [http://code.google.com/p/beanshell2/source/browse/trunk/tests/junitTests/src/bsh/InterpreterConcurrencyTest.java InterpreterConcurrencyTest.java] - see issue#40
