@@ -2,6 +2,7 @@ package bsh;
 
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.FileReader;
@@ -15,6 +16,12 @@ public class OldScriptsTest {
 	public static junit.framework.Test suite() throws Exception {
 		final TestSuite suite = new TestSuite();
 		final File baseDir = new File("tests/test-scripts");
+		try {
+			new TestBshScript(new File(baseDir, "Fail.bsh")).runTest();
+			Assert.fail("Fail.bsh should fail!");
+		} catch (final AssertionError e) {
+			// expected
+		}
 		addTests(baseDir, suite);
 		return suite;
 	}
@@ -25,7 +32,7 @@ public class OldScriptsTest {
 		if (files != null) {
 			for (File file : files) {
 				final String name = file.getName();
-				if (file.isFile() && name.endsWith(".bsh") && ! "TestHarness.bsh".equals(name) && ! "RunAllTests.bsh".equals(name)) {
+				if (file.isFile() && name.endsWith(".bsh") && ! "TestHarness.bsh".equals(name) && ! "RunAllTests.bsh".equals(name) && ! "Fail.bsh".equals(name)) {
 					suite.addTest(new TestBshScript(file));
 				}
 			}
@@ -33,7 +40,7 @@ public class OldScriptsTest {
 	}
 
 
-	public static class TestBshScript extends TestCase {
+	static class TestBshScript extends TestCase {
 
 		private File _file;
 
@@ -56,7 +63,8 @@ public class OldScriptsTest {
 			interpreter.eval("path=" + path + ';');
 			interpreter.eval("cd(" + path + ");");
 			interpreter.eval(new FileReader(_file));
-			assertEquals("test_completed should be true", Boolean.TRUE, interpreter.get("test_completed"));
+			assertEquals("'test_completed' flag check", Boolean.TRUE, interpreter.get("test_completed"));
+			assertEquals("'test_failed' flag check", Boolean.FALSE, interpreter.get("test_failed"));
 		}
 
 	}
