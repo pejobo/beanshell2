@@ -1,4 +1,4 @@
-#summary Release plans
+#summary Release plan for 2.0b5
 #labels Phase-Requirements
 
 There are no releases yet.
