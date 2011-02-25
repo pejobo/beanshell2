@@ -16,7 +16,7 @@
 
 <property name="file" value=""/>
 
-	<property name="version" value="2.1b0"/>
+	<property name="version" value="2.1b1"/>
 	<property name="deprecation" value="on"/>
 	<property name="Specification-Title" value="BeanShell2" />
 	<property name="Specification-Version" value="${version}" />
