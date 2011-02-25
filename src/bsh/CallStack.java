@@ -33,6 +33,7 @@
 
 package bsh;
 
+import java.io.Serializable;
 import java.util.Stack;
 import java.util.EmptyStackException;
 
@@ -56,9 +57,12 @@ import java.util.EmptyStackException;
 	it exposes) creates a new CallStack for each external call.
 	<p>
 */
-public final class CallStack 
-{
+public final class CallStack implements Serializable {
+
+	private static final long serialVersionUID = 0L;
+
 	private final Stack<NameSpace> stack = new Stack<NameSpace>();
+
 
 	public CallStack() { }
 

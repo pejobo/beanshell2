@@ -34,6 +34,7 @@
 
 package	bsh;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -59,19 +60,16 @@ import java.lang.reflect.Field;
 	an Interpreter instance.  Together they comprise a Bsh scripted object 
 	context.
 	<p>
-
-	Note: I'd really like to use collections here, but we have to keep this
-	compatible with JDK1.1 
 */
 /*
 	Thanks to Slava Pestov (of jEdit fame) for import caching enhancements.
 	Note: This class has gotten too big.  It should be broken down a bit.
 */
 // not at all thread-safe - fschmidt
-public class NameSpace 
-	implements java.io.Serializable, BshClassManager.Listener, 
-	NameSource
-{
+public class NameSpace implements Serializable, BshClassManager.Listener, NameSource {
+	
+	private static final long serialVersionUID = 5004976946651004751L;
+
 	public static final NameSpace JAVACODE = 
 		new NameSpace((BshClassManager)null, "Called from compiled Java code.");
 	static {
