@@ -1,3 +1,21 @@
+Running the Unit Tests
+----------------------
+
+Use the tool of your choice to run the unit tests located unter
+
+	tests/junitTests/src/bsh
+
+You could also use the provided ant target:
+
+	ant junit-tests
+
+The test class "bsh.OldScriptsTest" runs the 'legacy' test srcipts,
+see description below.
+
+
+===================
+Legacy test scripts
+===================
 
 Running the Test Scripts
 ------------------------
@@ -12,6 +30,10 @@ Then run the RunAllTests.bsh script:
 RunAllTests.bsh will run every file in test with a file extension of ".bsh"
 except itself and TestHarness.bsh.  At the end the test suite will report a 
 summary of any failures or warnings.
+
+There is also an ant target for this:
+
+	ant test
 
 
 Writing Test Scripts
