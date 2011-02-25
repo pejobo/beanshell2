@@ -42,7 +42,6 @@ import java.util.HashMap;
 import java.util.Collections;
 
 import java.io.InputStream;
-import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 
@@ -66,7 +65,7 @@ import java.lang.reflect.Field;
 	Note: This class has gotten too big.  It should be broken down a bit.
 */
 // not at all thread-safe - fschmidt
-public class NameSpace implements Serializable, BshClassManager.Listener, NameSource {
+public class NameSpace implements Serializable, BshClassManager.Listener, NameSource, Cloneable {
 	
 	private static final long serialVersionUID = 5004976946651004751L;
 
@@ -124,7 +123,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 	boolean isClass;
 	Class classStatic;	
 	Object classInstance;
-
+	
 	void setClassStatic( Class clas ) {
 		this.classStatic = clas;
 		importStatic( clas );
@@ -1003,7 +1002,7 @@ System.out.println("experiment: creating class manager");
 		*/
 			Interpreter.debug( e.toString() );
 			throw new UtilEvalError( 
-				"Error loading script: "+ e.getMessage());
+				"Error loading script: "+ e.getMessage(), e);
 		}
 
 		// Look for the loaded command 
@@ -1500,5 +1499,40 @@ System.out.println("experiment: creating class manager");
 		
 		return null;
 	}
-}
 
+
+	NameSpace copy() {
+		try {
+			final NameSpace clone = (NameSpace) clone();
+			clone.thisReference = null;
+			clone.variables = clone(variables);
+			clone.methods = clone(methods);
+			clone.importedClasses = clone(importedClasses);
+			clone.importedPackages = clone(importedPackages);
+			clone.importedCommands = clone(importedCommands);
+			clone.importedObjects = clone(importedObjects);
+			clone.importedStatic = clone(importedStatic);
+			clone.names = clone(names);
+			return clone;
+		} catch (CloneNotSupportedException e) {
+			throw new IllegalStateException(e);
+		}
+	}
+
+
+	private <K,V> Map<K,V> clone(final Map<K,V> map) {
+		if (map == null) {
+			return null;
+		}
+		return new HashMap<K,V>(map);
+	}
+
+
+	private <T> List<T> clone(final List<T> list) {
+		if (list == null) {
+			return null;
+		}
+		return new ArrayList<T>(list);
+	}
+
+}

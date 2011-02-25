@@ -203,7 +203,7 @@ public final class This implements java.io.Serializable, Runnable
 			} catch ( UtilEvalError e ) {/*leave null*/ }
 			if ( methodName.equals("equals" ) && equalsMethod == null ) {
 				Object obj = args[0];
-				return new Boolean( proxy == obj );
+				return proxy == obj;
 			}
 
 			/*
@@ -232,9 +232,9 @@ public final class This implements java.io.Serializable, Runnable
 			return Primitive.unwrap( 
 				invokeMethod( methodName, Primitive.wrap(args, paramTypes) ) );
 		}
-	};
+	}
 
-	private This( NameSpace namespace, Interpreter declaringInterpreter ) { 
+	This( NameSpace namespace, Interpreter declaringInterpreter ) {
 		this.namespace = namespace; 
 		this.declaringInterpreter = declaringInterpreter;
 		//initCallStack( namespace );
@@ -296,10 +296,7 @@ public final class This implements java.io.Serializable, Runnable
 		have to script them directly.
 		<p>
 
-		@see bsh.This.invokeMethod( 
-			String methodName, Object [] args, Interpreter interpreter, 
-			CallStack callstack, SimpleNode callerInfo )
-		@param if callStack is null a new CallStack will be created and
+		@param callstack if callStack is null a new CallStack will be created and
 			initialized with this namespace.
 		@param declaredOnly if true then only methods declared directly in the
 			namespace will be visible - no inherited or imported methods will
