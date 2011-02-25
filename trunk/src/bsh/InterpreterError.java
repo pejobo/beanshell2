@@ -30,18 +30,24 @@
  *  http://www.pat.net/~pat/                                                 *
  *                                                                           *
  *****************************************************************************/
-
-
+// part of beanshell fork at http://code.google.com/p/beanshell2
+// licensed unter GNU Lesser GPL, see http://www.gnu.org/licenses/lgpl.html
 package bsh;
 
 /**
-	An internal error in the interpreter has occurred.
-*/
-public class InterpreterError extends RuntimeException
-{
-	public InterpreterError(String s)
-	{
+ * An internal error in the interpreter has occurred.
+ */
+public class InterpreterError extends RuntimeException {
+
+	public InterpreterError(final String s) {
 		super(s);
 	}
+
+
+	public InterpreterError(final String s, final Throwable cause) {
+		super(s, cause);
+	}
+
+
 }
 

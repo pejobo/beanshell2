@@ -173,7 +173,10 @@ public class Interpreter
 	{
 		//System.out.println("New Interpreter: "+this +", sourcefile = "+sourceFileInfo );
 		parser = new Parser( in );
-		long t1=System.currentTimeMillis();
+		long t1 = 0;
+		if (Interpreter.DEBUG) {
+			t1=System.currentTimeMillis();
+		}
 		this.in = in;
 		this.out = out;
 		this.err = err;
@@ -185,27 +188,32 @@ public class Interpreter
 		this.sourceFileInfo = sourceFileInfo;
 
 		BshClassManager bcm = BshClassManager.createClassManager( this );
-		if ( namespace == null )
-			this.globalNameSpace = new NameSpace( bcm, "global");
-		else
-			this.globalNameSpace = namespace;
+		if ( namespace == null ) {
+			globalNameSpace = new NameSpace( bcm, "global");
+			initRootSystemObject();
+		} else {
+			globalNameSpace = namespace;
+			try {
+				if ( ! (globalNameSpace.getVariable("bsh") instanceof This)) {
+					initRootSystemObject();
+				}
+			} catch (final UtilEvalError e) {
+				throw new IllegalStateException(e);
+			}
+		}
 
 		// now done in NameSpace automatically when root
 		// The classes which are imported by default
 		//globalNameSpace.loadDefaultImports();
 
-		/* 
-			Create the root "bsh" system object if it doesn't exist.
-		*/
-		if ( ! ( getu("bsh") instanceof bsh.This ) )
-			initRootSystemObject();
-
-		if ( interactive )
+		if ( interactive ) {
 			loadRCFiles();
+		}
 
-		long t2=System.currentTimeMillis();
-		if ( Interpreter.DEBUG ) 
+		if ( Interpreter.DEBUG ) {
+			long t2=System.currentTimeMillis();
 			Interpreter.debug("Time to initialize interpreter: "+(t2-t1));
+		}
 	}
 
 	public Interpreter(
