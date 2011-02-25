@@ -5,7 +5,7 @@ There are no releases yet.
 
 The last release on [http://www.beanshell.org Beanshell.org] was *2.0b4* in june 2005.
 
-It's planned to release a bugfix version *2.0b5* in *march 2011*.
+It's planned to release a bugfix version *2.1b0* in *march 2011*.
 
 This version should be 100% compatible to 2.0b4 - with the one exception that the [http://code.google.com/p/beanshell2/issues/detail?id=17 support for parsing of java files through the class loader has been dropped]. Please leave a comment at the issue if you rely on this!
 
