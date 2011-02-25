@@ -23,15 +23,15 @@ printBanner()
 
 	    this.jconsole = bsh.console;
 	    jconsole.println( 
-			new ImageIcon( getResource("/bsh/util/lib/small_bean_shell.gif")) );
+			new ImageIcon( getResource("/bsh/util/lib/small_bean_shell.png")) );
 	    jconsole.print(
-			Interpreter.VERSION + " - by Pat Niemeyer (pat@pat.net)",
+			Interpreter.VERSION + " - http://code.google.com/p/beanshell2",
 			new Font("SansSerif", Font.BOLD, 12), 
 			new Color(20,100,20) );
 	    jconsole.println();
 
 	} else
 		print( "BeanShell "
-			+ Interpreter.VERSION +" - by Pat Niemeyer (pat@pat.net)");
+			+ Interpreter.VERSION +" - http://code.google.com/p/beanshell2");
 
 }

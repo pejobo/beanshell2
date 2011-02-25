@@ -1,6 +1,6 @@
 <!--
-	Ant build file for BeanShell
-	http://www.beanshell.org/
+	Ant build file for BeanShell2
+	http://code.google.com/p/beanshell2
 
 	Uses Ant 1.6
 	http://www.apache.org/
@@ -10,7 +10,7 @@
 		- Why can't I nest filesets?  This seems like it would be so easy and
 		useful...
 -->
-<project name="beanshell" default="compile-all" basedir=".">
+<project name="BeanShell2" default="compile-all" basedir=".">
 
 <!-- Project Configuration -->
 
@@ -18,6 +18,10 @@
 
 	<property name="version" value="2.1b0"/>
 	<property name="deprecation" value="on"/>
+	<property name="Specification-Title" value="BeanShell2" />
+	<property name="Specification-Version" value="${version}" />
+	<property name="Specification-Vendor" value="http://www.beanshell.org/" />
+	<property name="Implementation-Vendor" value="http://code.google.com/p/beanshell2" />
 
 	<!-- choose an alternate compiler -->
 	<!-- 
@@ -161,6 +165,8 @@
 			debug="on"
 			includes="**/*.java"
 			excludes="${excludes},**/bak/**"
+			source="1.5"
+			target="1.5"
 		>
 			<classpath>
 				<fileset refid="lib-fileset"/>
@@ -193,6 +199,8 @@
 			debug="on"
 			includes="**/*.java"
 			excludes="${excludes},**/bak/**"
+			source="1.5"
+			target="1.5"
 		>
 			<classpath>
 				<fileset refid="lib-fileset"/>
@@ -224,8 +232,8 @@
 			 author="true"
 			 version="true"
 			 use="true"
-			 windowtitle="BeanShell ${version}"
-			 doctitle="&lt;h1&gt;BeanShell ${version}&lt;h1&gt;"
+			 windowtitle="BeanShell2 ${version}"
+			 doctitle="&lt;h1&gt;BeanShell2 ${version}&lt;h1&gt;"
 			 bottom="&lt;em&gt;&#169; 2000-2005 pat@pat.net :-)&lt;/em&gt;"
 		/>
 	</target>
@@ -360,11 +368,11 @@
 		<jar jarfile="${core-jar}">
 			<manifest>
 				<attribute name="Main-Class" value="bsh.Interpreter" />
-				<attribute name="Specification-Title" value="BeanShell core" />
+				<attribute name="Specification-Title" value="BeanShell2 core" />
 				<attribute name="Specification-Version" value="${version}" />
-				<attribute name="Specification-Vendor" value="http://www.beanshell.org/" />
+				<attribute name="Specification-Vendor" value="${Specification-Vendor}" />
 				<attribute name="Implementation-Version" value="${version} ${DATE}" />
-				<attribute name="Implementation-Vendor" value="Pat Niemeyer (pat@pat.net)" />
+				<attribute name="Implementation-Vendor" value="${Implementation-Vendor}" />
 			</manifest>
 			<fileset refid="core-fileset"/>
 		</jar>
@@ -375,11 +383,11 @@
 		<jar jarfile="${all-jar}">
 			<manifest>
 				<attribute name="Main-Class" value="bsh.Console" />
-				<attribute name="Specification-Title" value="BeanShell" />
+				<attribute name="Specification-Title" value="${Specification-Title}" />
 				<attribute name="Specification-Version" value="${version}" />
-				<attribute name="Specification-Vendor" value="http://www.beanshell.org/" />
+				<attribute name="Specification-Vendor" value="${Specification-Vendor}" />
 				<attribute name="Implementation-Version" value="${version} ${DATE}" />
-				<attribute name="Implementation-Vendor" value="Pat Niemeyer (pat@pat.net)" />
+				<attribute name="Implementation-Vendor" value="${Implementation-Vendor}" />
 			</manifest>
 			<fileset refid="core-fileset"/>
 			<fileset refid="classpath-fileset"/>
@@ -403,7 +411,7 @@
 	<target name="zipsrc" depends="_distdir">
 		<delete file="${src-zip}"/>
 		<zip zipfile="${src-zip}">
-			<zipfileset dir="." prefix="BeanShell-${version}">
+			<zipfileset dir="." prefix="BeanShell2-${version}">
 				<exclude name="classes*"/>
 				<exclude name="classes/**/*"/>
 				<exclude name="dist*"/>
@@ -426,9 +434,9 @@
 			<manifest>
 				<attribute name="Specification-Title" value="${specification-title}" />
 				<attribute name="Specification-Version" value="${version}" />
-				<attribute name="Specification-Vendor" value="http://www.beanshell.org/" />
+				<attribute name="Specification-Vendor" value="${Specification-Vendor}" />
 				<attribute name="Implementation-Version" value="${version} ${DATE}" />
-				<attribute name="Implementation-Vendor" value="Pat Niemeyer (pat@pat.net)" />
+				<attribute name="Implementation-Vendor" value="${Implementation-Vendor}" />
 			</manifest>
 			<fileset refid="${fileset}"/>
 		</jar>
@@ -487,11 +495,11 @@
 		<war warfile="${bshservlet-war}" 
 			webxml="${src-dir}/bsh/servlet/example-web.xml">
 			<manifest>
-				<attribute name="Specification-Title" value="BeanShell webapp" />
+				<attribute name="Specification-Title" value="BeanShell2 webapp" />
 				<attribute name="Specification-Version" value="${version}" />
-				<attribute name="Specification-Vendor" value="http://www.beanshell.org/" />
+				<attribute name="Specification-Vendor" value="${Specification-Vendor}" />
 				<attribute name="Implementation-Version" value="${version} ${DATE}" />
-				<attribute name="Implementation-Vendor" value="Pat Niemeyer (pat@pat.net)" />
+				<attribute name="Implementation-Vendor" value="${Implementation-Vendor}" />
 			</manifest>
 			<!--classes dir="${build-dir}" includes="bsh/servlet/**/*"/-->
 			<fileset dir="${src-dir}/bsh/servlet/" includes="index.html"/>
@@ -502,11 +510,11 @@
 		<war warfile="${bshservlet-wbsh-war}" 
 			webxml="${src-dir}/bsh/servlet/example-web.xml">
 			<manifest>
-				<attribute name="Specification-Title" value="BeanShell webapp" />
+				<attribute name="Specification-Title" value="BeanShell2 webapp" />
 				<attribute name="Specification-Version" value="${version}" />
-				<attribute name="Specification-Vendor" value="http://www.beanshell.org/" />
+				<attribute name="Specification-Vendor" value="${Specification-Vendor}" />
 				<attribute name="Implementation-Version" value="${version} ${DATE}" />
-				<attribute name="Implementation-Vendor" value="Pat Niemeyer (pat@pat.net)" />
+				<attribute name="Implementation-Vendor" value="${Implementation-Vendor}" />
 			</manifest>
 			<!--classes dir="${build-dir}" includes="bsh/servlet/**/*"/-->
 			<fileset dir="${src-dir}/bsh/servlet/" includes="index.html"/>
@@ -588,7 +596,9 @@
 				destdir="${build-dir}"
 				debug="on"
 				debuglevel="lines,vars,source"
-				source="1.5">
+				source="1.5"
+				target="1.5"
+			  >
 		 <classpath>
 			<path refid="test-classpath"/>
 		 </classpath>
