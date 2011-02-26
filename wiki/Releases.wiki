@@ -24,11 +24,12 @@ The most notable other changes are the drop of java 1.4 support and the support 
 See the list of [http://code.google.com/p/beanshell2/issues/list?can=1&q=status%3AFixed+Type%3DDefect bug fixes], [http://code.google.com/p/beanshell2/issues/list?can=1&q=status%3AFixed+Type%3DEnhancement enhancements] or see [http://code.google.com/p/beanshell2/issues/list?can=1&q=status%3AFixed+milestone%3D2.1b0 all changes here].
 
 Possible mid time targets for a further *2.1* builds could be:
- * build-in jsr-233 support, inluding an AST based javax.script.Compilable support with improved performance for repeated invocations
- * improved class file creation<br>if you work with interfaces you don't need class definitions in beanshell at all<br>currently beanshell embeds an ancient [http://asm.ow2.org/ ASM] version
- * performance improvements<br>beanshell isn't slow and has a very low memory footprint, but you could alway do better...;)
+ * Further *bug fixes*<br>There are 223 open bugs listed for the old beanshell version at [http://sourceforge.net/tracker/?group_id=4075 sourceforge.net] which could be evaluated and moved to our [http://code.google.com/p/beanshell2/issues/list issue tracker]
+ * Build-in *jsr-233 support*<br>..inluding an AST based javax.script.Compilable support with improved performance for repeated invocations
+ * *Improved class file creation*<br>If you work with interfaces you don't need class definitions in beanshell at all.<br>Currently beanshell embeds an ancient [http://asm.ow2.org/ ASM] version.
+ * *Performance improvements*<br>Beanshell isn't slow and has a very low memory footprint, but you could alway do better...;)
  * ??
 
 A possible long time target could be the compilation to class file, utilizing the new Java 7 dynamic call site support.
 
-Please file an issue or send a request to the [http://beanshell.2283338.n4.nabble.com/BeanShell-2-fork-f3316372.html discussion group] for your feature requests.
+Please file an [http://code.google.com/p/beanshell2/issues/list issue] or send a request to the [http://beanshell.2283338.n4.nabble.com/BeanShell-2-fork-f3316372.html discussion group] for your feature requests.
