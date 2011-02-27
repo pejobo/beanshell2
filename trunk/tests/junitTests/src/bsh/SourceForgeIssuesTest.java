@@ -62,6 +62,7 @@ public class SourceForgeIssuesTest {
 	public void sourceforge_issue_2562805() throws Exception {
 		Interpreter.DEBUG = true;
 		TestUtil.eval("System.out.println(null);");
+		Interpreter.DEBUG = false;
 	}
 	
 
