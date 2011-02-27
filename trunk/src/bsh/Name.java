@@ -186,7 +186,7 @@ class Name implements java.io.Serializable
 	}
 
 	/**
-		@see toObject()
+		@see #toObject(CallStack, Interpreter)
 		@param forceClass if true then resolution will only produce a class.
 		This is necessary to disambiguate in cases where the grammar knows
 		that we want a class; where in general the var path may be taken.

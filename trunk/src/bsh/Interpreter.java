@@ -715,7 +715,7 @@ public class Interpreter
 			} catch(TokenMgrError e) {
 				throw new EvalError(
 					"Sourced file: "+sourceFileInfo+" Token Parsing Error: " 
-					+ e.getMessage(), node, callstack );
+					+ e.getMessage(), node, callstack, e );
 			} finally {
 				localInterpreter.get_jjtree().reset();
 
