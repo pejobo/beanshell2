@@ -11,11 +11,12 @@ Old test-srcipts 'inherited' from Beanshell.org are executed by the test class [
 List of failing test scripts (revision r54) is
  # [http://code.google.com/p/beanshell2/source/browse/trunk/tests/test-scripts/class13.bsh class13.bsh] - see issue#7
  # [http://code.google.com/p/beanshell2/source/browse/trunk/tests/test-scripts/class3.bsh class3.bsh] - see issue#8
- # [http://code.google.com/p/beanshell2/source/browse/trunk/tests/test-scripts/classinterf1.bsh classinterf1.bsh]
+ # [http://code.google.com/p/beanshell2/source/browse/trunk/tests/test-scripts/classinterf1.bsh classinterf1.bsh] - see issue#46
  # [http://code.google.com/p/beanshell2/source/browse/trunk/tests/test-scripts/commands.bsh commands.bsh]
  # [http://code.google.com/p/beanshell2/source/browse/trunk/tests/test-scripts/run.bsh run.bsh]
 
 List of failing unit tests (revision r54) 
- # [http://code.google.com/p/beanshell2/source/browse/trunk/tests/junitTests/src/bsh/Issue_7_Test.java Issue_7_Test.java] - see issue#7
- # [http://code.google.com/p/beanshell2/source/browse/trunk/tests/junitTests/src/bsh/Issue_8_Test.java Issue_8_Test.java] - see issue#8
- # [http://code.google.com/p/beanshell2/source/browse/trunk/tests/junitTests/src/bsh/InterpreterConcurrencyTest.java InterpreterConcurrencyTest.java] - see issue#40
+ # [http://code.google.com/p/beanshell2/source/browse/trunk/tests/junitTests/src/bsh/Issue_7_Test.java Issue_7_Test] - see issue#7
+ # [http://code.google.com/p/beanshell2/source/browse/trunk/tests/junitTests/src/bsh/Issue_8_Test.java Issue_8_Test] - see issue#8
+ # [http://code.google.com/p/beanshell2/source/browse/trunk/tests/junitTests/src/bsh/InterpreterConcurrencyTest.java InterpreterConcurrencyTest] - see issue#40
+ # [http://code.google.com/p/beanshell2/source/browse/trunk/tests/junitTests/src/bsh/ClassGeneratorTest.java ClassGeneratorTest#define_interface_with_constants] - see issue#46
