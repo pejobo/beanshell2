@@ -69,10 +69,19 @@ public class ClassGeneratorTest {
 	}
 
 
+	/**
+	 * See also failing test script "classinterf1.bsh" and
+	 * <a href="http://code.google.com/p/beanshell2/issues/detail?id=46">issue #46</a>.
+	 */
 	@Test
-	public void inner_class() throws Exception {
-		// todo
+	public void define_interface_with_constants() throws Exception {
+		// these three are treated equal in java
+		TestUtil.eval("interface Test { public static final int x = 1; }");
+		TestUtil.eval("interface Test { static final int x = 1; }");
+		TestUtil.eval("interface Test { final int x = 1; }");
+		// these three are treated equal in java
+		TestUtil.eval("interface Test { public static int x = 1; }");
+		TestUtil.eval("interface Test { static int x = 1; }");
+		TestUtil.eval("interface Test { int x = 1; }");
 	}
-
-
 }
