@@ -7,7 +7,7 @@ import java.io.File;
 public class Issue_7_Test {
 
 	@Test
-	public void run() throws Exception {
+	public void run_script_class13() throws Exception {
 		new OldScriptsTest.TestBshScript( new File("tests/test-scripts/class13.bsh")).runTest();
 	}
 

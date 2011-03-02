@@ -140,6 +140,15 @@ public class SourceForgeIssuesTest {
 	}
 
 
+	/**
+	 * <a href="http://sourceforge.net/tracker/?func=detail&aid=1897313&group_id=4075&atid=104075">Sourceforge issue "error when looping over collections containing null" - ID: 1897313</a>.
+	 **/
+	@Test
+	public void sourceforge_issue_1897313() throws Exception {
+		TestUtil.eval("for (x: new String[]{\"foo\",null,\"bar\"}) { print(x); }");
+	}
+
+
 	private static class DummyListener implements BshClassManager.Listener {
 
 		final byte[] _memory;
