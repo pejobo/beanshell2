@@ -476,7 +476,6 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		if ( parent != null && parent != JAVACODE )
 			return parent.getClassManager();
 
-System.out.println("experiment: creating class manager");
 		classManager = BshClassManager.createClassManager( null/*interp*/ );
 		
 		//Interpreter.debug("No class manager namespace:" +this);
