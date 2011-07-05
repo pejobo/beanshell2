@@ -33,12 +33,18 @@
 
 package bsh;
 
-import java.net.*;
-import java.util.*;
 import java.io.IOException;
-import java.io.*;
+import java.io.InputStream;
+import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URL;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 /**
 	BshClassManager manages all classloading in BeanShell.
@@ -137,8 +143,15 @@ public class BshClassManager
 
 		// Do we have the optional package?
 		if ( Capabilities.classExists("bsh.classpath.ClassManagerImpl") ) 
-			manager = new bsh.classpath.ClassManagerImpl();
-		else 
+			try {
+				// Try to load the module
+				// don't refer to it directly here or we're dependent upon it
+				Class clazz = Class.forName( "bsh.classpath.ClassManagerImpl" );
+				manager = (BshClassManager) clazz.newInstance();
+			} catch ( Exception e ) {
+				throw new InterpreterError("Error loading classmanager", e);
+			}
+		else
 			manager = new BshClassManager();
 
 		if ( interpreter == null )
