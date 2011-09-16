@@ -4,10 +4,13 @@ import bsh.classpath.ClassManagerImpl;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Callable;
 
+@RunWith(FilteredTestRunner.class)
 public class SourceForgeIssuesTest {
 
 	@After
@@ -107,6 +110,7 @@ public class SourceForgeIssuesTest {
 	 * Overriding a method which is invoked from super-constructor issues a NPE.
 	 **/
 	@Test
+	@Category(KnownIssue.class)
 	public void sourceforge_issue_2081602() throws Exception {
 		// Interpreter.DEBUG = true;
 		Callable result = (Callable) TestUtil.eval(

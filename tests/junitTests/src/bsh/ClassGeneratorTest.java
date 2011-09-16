@@ -2,11 +2,14 @@ package bsh;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
 
 import java.util.concurrent.Callable;
 
 import static org.junit.Assert.assertEquals;
 
+@RunWith(FilteredTestRunner.class)
 public class ClassGeneratorTest {
 
 	@Test
@@ -74,6 +77,7 @@ public class ClassGeneratorTest {
 	 * <a href="http://code.google.com/p/beanshell2/issues/detail?id=46">issue #46</a>.
 	 */
 	@Test
+	@Category(KnownIssue.class)
 	public void define_interface_with_constants() throws Exception {
 		// these three are treated equal in java
 		TestUtil.eval("interface Test { public static final int x = 1; }");
