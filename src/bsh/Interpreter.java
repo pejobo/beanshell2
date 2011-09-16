@@ -33,8 +33,20 @@
 
 package bsh;
 
-import java.util.Vector;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.PrintStream;
+import java.io.Reader;
+import java.io.Serializable;
+import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 
@@ -113,9 +125,6 @@ public class Interpreter
 	static { 
 		staticInit();
 	}
-
-	/** Shared system object visible under bsh.system */
-	static This sharedObject;
 
 	/** 
 		Strict Java mode 
@@ -280,18 +289,10 @@ public class Interpreter
 		BshClassManager bcm = getClassManager();
 		// bsh
 		setu("bsh", new NameSpace( bcm, "Bsh Object" ).getThis( this ) );
-
-		// init the static shared sharedObject if it's not there yet
-		if ( sharedObject == null )
-			sharedObject = new NameSpace( 
-				bcm, "Bsh Shared System Object" ).getThis( this );
-		// bsh.system
-		setu( "bsh.system", sharedObject );
-		setu( "bsh.shared", sharedObject ); // alias
-
+		setu( "bsh.system", SYSTEM_OBJECT);
+		setu( "bsh.shared", SYSTEM_OBJECT); // alias
 		// bsh.help
-		This helpText = new NameSpace( 
-			bcm, "Bsh Command Help Text" ).getThis( this );
+		This helpText = new NameSpace(bcm, "Bsh Command Help Text" ).getThis( this );
 		setu( "bsh.help", helpText );
 
 		// bsh.cwd
@@ -442,7 +443,7 @@ public class Interpreter
 				eval("printBanner();"); 
 			} catch ( EvalError e ) {
 				println(
-					"BeanShell "+VERSION+" - by Pat Niemeyer (pat@pat.net)");
+					"BeanShell2 " + VERSION + " - http://code.google.com/p/beanshell2");
 			}
 
 		// init the callstack.  
@@ -1243,5 +1244,14 @@ public class Interpreter
 	public boolean getShowResults()  {
 		return showResults;
 	}
-}
 
+	private static final SystemObject SYSTEM_OBJECT = new SystemObject();
+
+	/** Shared system object visible under bsh.system */
+	private static final class SystemObject implements Serializable {
+
+		private static final long serialVersionUID = -4676269190678503822L;
+		public volatile boolean shutdownOnExit = true;
+
+	}
+}
