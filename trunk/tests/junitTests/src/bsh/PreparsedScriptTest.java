@@ -2,6 +2,7 @@ package bsh;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.net.URL;
 import java.util.Collections;
@@ -10,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 
+@RunWith(FilteredTestRunner.class)
 public class PreparsedScriptTest {
 
 	private ClassLoader _classLoader = new ClassLoader() {
@@ -89,5 +91,15 @@ public class PreparsedScriptTest {
 	}
 
 
-
+	@Test
+	public void param_with_name_result() throws Exception {
+		final AtomicInteger result = new AtomicInteger();
+		final PreparsedScript f = new PreparsedScript(
+				"result.set(result.get() + 42);",
+				_classLoader);
+		f.invoke(Collections.singletonMap("result", result));
+		Assert.assertEquals(42, result.get());
+		f.invoke(Collections.singletonMap("result", result));
+		Assert.assertEquals(84, result.get());
+	}
 }

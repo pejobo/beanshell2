@@ -576,7 +576,7 @@
 		  Set up some properties for use with the testing framework
 	-->
 
-	<property name="junit.jar" value="${lib-dir}/testing/junit-4.4.jar"/>
+	<property name="junit.jar" value="${lib-dir}/testing/junit-4.8.2.jar"/>
 	
 	<!-- JUnit source files. -->
 	<property name="junit-test-src-dir" value="tests/junitTests/src" />
@@ -607,13 +607,13 @@
 	  </javac>
 	</target>
 	
-	<target name="junit-tests"
-			  depends="build-junit-tests">
+	<target name="junit-tests" depends="build-junit-tests">
 	  <!-- description="Runs the JUnit test suite."> -->
 	  
 	  <mkdir dir="${junit-reports}" />
 	  
 	  <junit printsummary="yes" haltonfailure="no" fork="yes">
+         <sysproperty key="skip_known_issues" value=""/>
 		 <classpath>
 			<path refid="test-classpath"/>
 		 </classpath>
@@ -629,7 +629,31 @@
 		 </batchtest>
 	  </junit>
 	</target>
-	
+
+
+	<target name="junit-tests-all" depends="build-junit-tests">
+	  <!-- description="Runs the JUnit test suite."> -->
+
+	  <mkdir dir="${junit-reports}" />
+
+	  <junit printsummary="yes" haltonfailure="no" fork="yes">
+		 <classpath>
+			<path refid="test-classpath"/>
+		 </classpath>
+
+		 <assertions enableSystemAssertions="true"/>
+
+		 <formatter type="brief" usefile="true"/>
+
+		 <batchtest todir="${junit-reports}">
+			<fileset dir="${junit-test-src-dir}">
+			  <include name="**/*Test.java"/>
+			</fileset>
+		 </batchtest>
+	  </junit>
+	</target>
+
+
 	<!-- 
 		Run the bsh test suite.
 	-->
