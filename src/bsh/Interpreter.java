@@ -121,8 +121,9 @@ public class Interpreter
 	// This should be per instance
 	transient static PrintStream debug;
 	static String systemLineSeparator = "\n"; // default
+	private static final This SYSTEM_OBJECT = This.getThis(new NameSpace(null, null, "bsh.system"), null);
 
-	static { 
+	static {
 		staticInit();
 	}
 
@@ -1245,13 +1246,13 @@ public class Interpreter
 		return showResults;
 	}
 
-	private static final SystemObject SYSTEM_OBJECT = new SystemObject();
 
-	/** Shared system object visible under bsh.system */
-	private static final class SystemObject implements Serializable {
-
-		private static final long serialVersionUID = -4676269190678503822L;
-		public volatile boolean shutdownOnExit = true;
-
+	public static void setShutdownOnExit(final boolean value) {
+		try {
+			SYSTEM_OBJECT.getNameSpace().setVariable("shutdownOnExit", Boolean.valueOf(value), false);
+		} catch (final UtilEvalError utilEvalError) {
+			throw new IllegalStateException(utilEvalError);
+		}
 	}
+
 }
