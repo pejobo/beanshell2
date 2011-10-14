@@ -366,7 +366,14 @@
 	<!-- Jar targets -->
 
 	<target name="jarcore" depends="compile,_distdir">
-		<delete file="${core-jar}"/>
+        <fail message="Please use ant 1.8">
+            <condition>
+                <not>
+                    <contains string="${ant.version}" substring="1.8"/>
+                </not>
+            </condition>
+        </fail>
+    <delete file="${core-jar}"/>
 		<jar jarfile="${core-jar}">
 			<manifest>
 				<attribute name="Main-Class" value="bsh.Interpreter" />
