@@ -28,7 +28,7 @@ import java.util.Arrays;
 	introduced.
 */
 /*
-	Implementation notes:  bsh methods are not currently expored to the
+	Implementation notes:  bsh methods are not currently exported to the
 	external namespace.  All that would be required to add this is to override
 	setMethod() and provide a friendlier view than vector (currently used) for
 	overloaded forms (perhaps a map by method SignatureKey).
@@ -120,6 +120,9 @@ public class ExternalNameSpace extends NameSpace
 	{
 		// check the external map for the variable name
 		Object value = externalMap.get( name );
+
+		if ( value == null && externalMap.containsKey( name ) )
+			value = Primitive.NULL;
 
 		Variable var;
 		if ( value == null ) 
