@@ -17,7 +17,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @RunWith(FilteredTestRunner.class)
-public class Project_Coin_Features {
+public class Project_Coin_Test {
 
 
 	@Test
@@ -47,7 +47,7 @@ public class Project_Coin_Features {
 
 	@SuppressWarnings({"JUnitTestMethodWithNoAssertions"})
 	@Test
-	@Category(Project_Coin_Features.class)
+	@Category(Project_Coin_Test.class)
 	public void try_with_resource_parsing() throws Exception {
 		eval(
 				"try (ByteArrayOutputStream x = new ByteArrayOutputStream()) {",
@@ -68,7 +68,7 @@ public class Project_Coin_Features {
 
 
 	@Test
-	@Category(Project_Coin_Features.class)
+	@Category(Project_Coin_Test.class)
 	public void try_with_resource() throws Exception {
 		final Interpreter interpreter = new Interpreter();
 		final AtomicBoolean closed = new AtomicBoolean(false);
@@ -113,7 +113,7 @@ public class Project_Coin_Features {
 
 
 	@Test
-	@Category(Project_Coin_Features.class)
+	@Category(Project_Coin_Test.class)
 	public void switch_on_strings() throws Exception {
 		final Object result = eval(
 					"switch(\"hurz\") {\n",
