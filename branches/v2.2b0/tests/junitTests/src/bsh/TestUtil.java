@@ -107,6 +107,15 @@ public class TestUtil {
 	}
 
 
+	public static Object eval(final String ... code) throws Exception {
+		StringBuffer buffer = new StringBuffer();
+		for (String s : code) {
+			buffer.append(s).append('\n');
+		}
+		return new Interpreter().eval(buffer.toString());
+	}
+
+
 	static class MeasureRunnable implements Runnable {
 
 		private final CountDownLatch _countDownLatch;

@@ -910,7 +910,8 @@ final class Reflect {
         if (Interpreter.DEBUG) {
             Interpreter.debug(msg + method + " with args:");
             for (int i = 0; i < args.length; i++) {
-                Interpreter.debug("args[" + i + "] = " + args[i] + " type = " + args[i].getClass());
+				final Object arg = args[i];
+				Interpreter.debug("args[" + i + "] = " + arg + " type = " + (arg == null ? "<unkown>" : arg.getClass()));
             }
         }
     }

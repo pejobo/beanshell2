@@ -375,6 +375,7 @@
 				<attribute name="Implementation-Version" value="${version} ${DATE}" />
 				<attribute name="Implementation-Vendor" value="${Implementation-Vendor}" />
 			</manifest>
+            <service type="javax.script.ScriptEngineFactory" provider="bsh.BshScriptEngineFactory"/>
 			<fileset refid="core-fileset"/>
 		</jar>
 	</target>
@@ -390,6 +391,7 @@
 				<attribute name="Implementation-Version" value="${version} ${DATE}" />
 				<attribute name="Implementation-Vendor" value="${Implementation-Vendor}" />
 			</manifest>
+            <service type="javax.script.ScriptEngineFactory" provider="bsh.BshScriptEngineFactory"/>
 			<fileset refid="core-fileset"/>
 			<fileset refid="classpath-fileset"/>
 			<fileset refid="reflect-fileset"/>
