@@ -106,7 +106,7 @@ public final class ParseException extends EvalError {
   public ParseException(String message) {
 	// Begin BeanShell Modification - super constructor args
 	// null node, null callstack, ParseException knows where the error is.
-	super( message, null, null );
+	super(message, null, null);
 	// End BeanShell Modification - super constructor args
     specialConstructor = false;
   }
@@ -123,6 +123,7 @@ public final class ParseException extends EvalError {
    * This variable determines which constructor was used to create
    * this object and thereby affects the semantics of the
    * "getMessage" method (see below).
+   * This is the same as "currentToken != null".
    */
   protected boolean specialConstructor;
 
@@ -273,7 +274,25 @@ public final class ParseException extends EvalError {
 
 	public int getErrorLineNumber() 
 	{
-		return currentToken.next.beginLine;
+		if (currentToken == null) {
+			String message = getMessage();
+			int index = message.indexOf(" at line ");
+			if (index > -1) {
+				message = message.substring(index + 9);
+				index = message.indexOf(',');
+				try {
+					if (index == -1) {
+						return Integer.parseInt(message);
+					}
+					return Integer.parseInt(message.substring(0, index));
+				} catch (NumberFormatException e) {
+					// ignore, we have no valid line information, just return -1 for now
+				}
+			}
+			return -1;
+		} else {
+			return currentToken.next.beginLine;
+		}
 	}
 
 	public String getErrorText() { 
