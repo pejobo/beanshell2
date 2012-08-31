@@ -117,6 +117,7 @@ public class Interpreter
 		turns it on or off.
 	*/
 	public static boolean DEBUG, TRACE, LOCALSCOPING;
+	public static boolean COMPATIBIILTY;
 
 	// This should be per instance
 	transient static PrintStream debug;
@@ -159,6 +160,13 @@ public class Interpreter
 
 	/** Control the verbose printing of results for the show() command. */
 	private boolean showResults;
+
+	/**
+	 * Compatibility mode. When {@code true} missing classes are tried to create from corresponding java source files.
+	 * Default value is {@code false}, could be changed to {@code true} by setting the system property
+	 * "bsh.compatibility" to "true".
+	 */
+	private boolean compatibility = COMPATIBIILTY;
 
 	/* --- End instance data --- */
 
@@ -1121,17 +1129,13 @@ public class Interpreter
 
 	static void staticInit() 
 	{
-	/* 
-		Apparently in some environments you can't catch the security exception
-		at all...  e.g. as an applet in IE  ... will probably have to work 
-		around 
-	*/
 		try {
 			systemLineSeparator = System.getProperty("line.separator");
 			debug = System.err;
 			DEBUG = Boolean.getBoolean("debug");
 			TRACE = Boolean.getBoolean("trace");
 			LOCALSCOPING = Boolean.getBoolean("localscoping");
+			COMPATIBIILTY = Boolean.getBoolean("bsh.compatibility");
 			String outfilename = System.getProperty("outfile");
 			if ( outfilename != null )
 				redirectOutputToFile( outfilename );
@@ -1255,4 +1259,27 @@ public class Interpreter
 		}
 	}
 
+
+	/**
+	 * Compatibility mode. When {@code true} missing classes are tried to create from corresponding java source files.
+	 * The Default value is {@code false}. This could be changed to {@code true} by setting the system property
+	 * "bsh.compatibility" to "true".
+	 *
+	 * @see #setCompatibility(boolean)
+	 */
+	public boolean getCompatibility() {
+		return compatibility;
+	}
+
+
+	/**
+	 * Setting compatibility mode. When {@code true} missing classes are tried to create from corresponding java source
+	 * files. The Default value is {@code false}. This could be changed to {@code true} by setting the system property
+	 * "bsh.compatibility" to "true".
+	 *
+	 * @see #getCompatibility()
+	 */
+	public void setCompatibility(final boolean value) {
+		compatibility = value;
+	}
 }

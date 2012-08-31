@@ -35,6 +35,7 @@ package bsh;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -185,7 +186,34 @@ public class BshClassManager
 			clas = plainClassForName( name );
 		} catch ( ClassNotFoundException e ) { /*ignore*/ }
 
+		// try scripted class
+		if ( clas == null && declaringInterpreter.getCompatibility() )
+			clas = loadSourceClass( name );
+
 		return clas;
+	}
+	
+	// Move me to classpath/ClassManagerImpl???
+	protected Class<?> loadSourceClass( final String name ) {
+		final String fileName = '/' + name.replace('.', '/') + ".java";
+		final InputStream in = getResourceAsStream( fileName );
+		if ( in == null ) {
+			return null;
+		}
+		try {
+			Interpreter.debug("Loading class from source file: " + fileName);
+			declaringInterpreter.eval( new InputStreamReader(in) );
+		} catch ( EvalError e ) {
+			if (Interpreter.DEBUG) {
+				e.printStackTrace();
+			}
+		}
+		try {
+			return plainClassForName( name );
+		} catch ( final ClassNotFoundException e ) {
+			Interpreter.debug("Class not found in source file: " + name);
+			return null;
+		}
 	}
 
 	/**
