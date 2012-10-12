@@ -1000,7 +1000,7 @@ public class ClassGeneratorUtil implements Constants {
 			if (e instanceof InvocationTargetException) {
 				e = (Exception) ((InvocationTargetException) e).getTargetException();
 			}
-			throw new InterpreterError("Error in class initialization: " + e);
+			throw new InterpreterError("Error in class initialization.", e);
 		}
 	}
 
