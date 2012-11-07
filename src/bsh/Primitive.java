@@ -756,6 +756,10 @@ public final class Primitive implements ParserConstants, java.io.Serializable
                 return operand;
             case MINUS:
                 return -operand;
+            case INCR:
+                return operand + 1;
+            case DECR:
+                return operand - 1;
             default:
                 throw new InterpreterError("bad float unaryOperation");
         }
@@ -771,6 +775,10 @@ public final class Primitive implements ParserConstants, java.io.Serializable
                 return operand;
             case MINUS:
                 return -operand;
+            case INCR:
+                return operand + 1;
+            case DECR:
+                return operand - 1;
             default:
                 throw new InterpreterError("bad double unaryOperation");
         }
