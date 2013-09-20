@@ -205,7 +205,7 @@ throw new Error("namespace lhs");
 					((Primitive)val).getValue() : val;
 
 				// This should probably be in Reflect.java
-				field.setAccessible(true);
+				Reflect.setAccessible(field);
 				field.set( object, fieldVal );
 				return val;
 			}
