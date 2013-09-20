@@ -842,8 +842,7 @@ class Name implements java.io.Serializable
 
                 if (obj == Primitive.NULL)
                     throw new UtilTargetError( new NullPointerException( 
-						"Null Pointer in Method Invocation of " +methodName
-							+"() on variable: "+targetName) );
+						"Null Pointer in Method Invocation" ) );
 
                 // some other primitive
                 // should avoid calling methods on primitive, as we do

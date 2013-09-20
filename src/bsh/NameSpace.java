@@ -1216,8 +1216,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 	protected void getAllNamesAux( List<String> list ) 
 	{
 		list.addAll( variables.keySet() );
-		if ( methods != null )
-			list.addAll( methods.keySet() );
+		list.addAll( methods.keySet() );
 		if ( parent != null )
 			parent.getAllNamesAux( list );
 	}

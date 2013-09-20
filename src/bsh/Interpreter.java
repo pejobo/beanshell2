@@ -33,20 +33,8 @@
 
 package bsh;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FilterInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.PrintStream;
-import java.io.Reader;
-import java.io.Serializable;
-import java.io.StringReader;
+import java.util.Vector;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 
@@ -107,7 +95,7 @@ public class Interpreter
 {
 	/* --- Begin static members --- */
 
-	public static final String VERSION = "2.2.0";
+	public static final String VERSION = "2.1b2";
 	/*
 		Debug utils are static so that they are reachable by code that doesn't
 		necessarily have an interpreter reference (e.g. tracing in utils).
@@ -117,16 +105,17 @@ public class Interpreter
 		turns it on or off.
 	*/
 	public static boolean DEBUG, TRACE, LOCALSCOPING;
-	public static boolean COMPATIBIILTY;
 
 	// This should be per instance
 	transient static PrintStream debug;
 	static String systemLineSeparator = "\n"; // default
-	private static final This SYSTEM_OBJECT = This.getThis(new NameSpace(null, null, "bsh.system"), null);
 
-	static {
+	static { 
 		staticInit();
 	}
+
+	/** Shared system object visible under bsh.system */
+	static This sharedObject;
 
 	/** 
 		Strict Java mode 
@@ -160,13 +149,6 @@ public class Interpreter
 
 	/** Control the verbose printing of results for the show() command. */
 	private boolean showResults;
-
-	/**
-	 * Compatibility mode. When {@code true} missing classes are tried to create from corresponding java source files.
-	 * Default value is {@code false}, could be changed to {@code true} by setting the system property
-	 * "bsh.compatibility" to "true".
-	 */
-	private boolean compatibility = COMPATIBIILTY;
 
 	/* --- End instance data --- */
 
@@ -298,10 +280,18 @@ public class Interpreter
 		BshClassManager bcm = getClassManager();
 		// bsh
 		setu("bsh", new NameSpace( bcm, "Bsh Object" ).getThis( this ) );
-		setu( "bsh.system", SYSTEM_OBJECT);
-		setu( "bsh.shared", SYSTEM_OBJECT); // alias
+
+		// init the static shared sharedObject if it's not there yet
+		if ( sharedObject == null )
+			sharedObject = new NameSpace( 
+				bcm, "Bsh Shared System Object" ).getThis( this );
+		// bsh.system
+		setu( "bsh.system", sharedObject );
+		setu( "bsh.shared", sharedObject ); // alias
+
 		// bsh.help
-		This helpText = new NameSpace(bcm, "Bsh Command Help Text" ).getThis( this );
+		This helpText = new NameSpace( 
+			bcm, "Bsh Command Help Text" ).getThis( this );
 		setu( "bsh.help", helpText );
 
 		// bsh.cwd
@@ -452,7 +442,7 @@ public class Interpreter
 				eval("printBanner();"); 
 			} catch ( EvalError e ) {
 				println(
-					"BeanShell2 " + VERSION + " - http://code.google.com/p/beanshell2");
+					"BeanShell "+VERSION+" - by Pat Niemeyer (pat@pat.net)");
 			}
 
 		// init the callstack.  
@@ -1129,13 +1119,17 @@ public class Interpreter
 
 	static void staticInit() 
 	{
+	/* 
+		Apparently in some environments you can't catch the security exception
+		at all...  e.g. as an applet in IE  ... will probably have to work 
+		around 
+	*/
 		try {
 			systemLineSeparator = System.getProperty("line.separator");
 			debug = System.err;
 			DEBUG = Boolean.getBoolean("debug");
 			TRACE = Boolean.getBoolean("trace");
 			LOCALSCOPING = Boolean.getBoolean("localscoping");
-			COMPATIBIILTY = Boolean.getBoolean("bsh.compatibility");
 			String outfilename = System.getProperty("outfile");
 			if ( outfilename != null )
 				redirectOutputToFile( outfilename );
@@ -1249,37 +1243,5 @@ public class Interpreter
 	public boolean getShowResults()  {
 		return showResults;
 	}
-
-
-	public static void setShutdownOnExit(final boolean value) {
-		try {
-			SYSTEM_OBJECT.getNameSpace().setVariable("shutdownOnExit", Boolean.valueOf(value), false);
-		} catch (final UtilEvalError utilEvalError) {
-			throw new IllegalStateException(utilEvalError);
-		}
-	}
-
-
-	/**
-	 * Compatibility mode. When {@code true} missing classes are tried to create from corresponding java source files.
-	 * The Default value is {@code false}. This could be changed to {@code true} by setting the system property
-	 * "bsh.compatibility" to "true".
-	 *
-	 * @see #setCompatibility(boolean)
-	 */
-	public boolean getCompatibility() {
-		return compatibility;
-	}
-
-
-	/**
-	 * Setting compatibility mode. When {@code true} missing classes are tried to create from corresponding java source
-	 * files. The Default value is {@code false}. This could be changed to {@code true} by setting the system property
-	 * "bsh.compatibility" to "true".
-	 *
-	 * @see #getCompatibility()
-	 */
-	public void setCompatibility(final boolean value) {
-		compatibility = value;
-	}
 }
+
