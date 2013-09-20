@@ -16,9 +16,7 @@
 
 <property name="file" value=""/>
 
-    <property name="ant.build.javac.target" value="1.5" />
-    <property name="ant.build.javac.source" value="1.5" />
-	<property name="version" value="2.2.0"/>
+	<property name="version" value="2.2b0"/>
 	<property name="deprecation" value="on"/>
 	<property name="Specification-Title" value="BeanShell2" />
 	<property name="Specification-Version" value="${version}" />
@@ -228,7 +226,7 @@
 
 	<target name="javadoc" depends="compile">
 		<mkdir dir="${javadoc-dir}" />
-		<javadoc packagenames="bsh,bsh.util,bsh.classpath,bsh.reflect"
+		<javadoc packagenames="bsh,bsh.util,bsh.classpath,bsh.reflect,bsh.operators,bsh.operators.standard"
 			 sourcepath="${src-dir}"
 			 destdir="${javadoc-dir}"
 			 author="true"
@@ -290,6 +288,7 @@
 	<fileset id="core-fileset" dir="${build-dir}">
 		<patternset>
 			<include name="bsh/*.class"/>
+			<include name="bsh/operators/**/*.class"/>
 <!-- something funny here...  Console ends up in jarall, but not Remote -->
 			<exclude name="bsh/Console.class"/>
 			<exclude name="bsh/Remote*"/>
@@ -298,7 +297,7 @@
 			<exclude name="bsh/DelayedEvalBshMethod*"/>
 		</patternset>
 	</fileset>
-
+        
 	<fileset id="classpath-fileset" dir="${build-dir}">
 		<patternset>
 			<include name="bsh/classpath/*.class"/>
@@ -366,14 +365,7 @@
 	<!-- Jar targets -->
 
 	<target name="jarcore" depends="compile,_distdir">
-        <fail message="Please use ant 1.8">
-            <condition>
-                <not>
-                    <contains string="${ant.version}" substring="1.8"/>
-                </not>
-            </condition>
-        </fail>
-    <delete file="${core-jar}"/>
+		<delete file="${core-jar}"/>
 		<jar jarfile="${core-jar}">
 			<manifest>
 				<attribute name="Main-Class" value="bsh.Interpreter" />
@@ -585,7 +577,7 @@
 		  Set up some properties for use with the testing framework
 	-->
 
-	<property name="junit.jar" value="${lib-dir}/testing/junit-4.8.2.jar"/>
+	<property name="junit.jar" value="${lib-dir}/testing/junit-4.4.jar"/>
 	
 	<!-- JUnit source files. -->
 	<property name="junit-test-src-dir" value="tests/junitTests/src" />
@@ -616,13 +608,13 @@
 	  </javac>
 	</target>
 	
-	<target name="junit-tests" depends="build-junit-tests">
+	<target name="junit-tests"
+			  depends="build-junit-tests">
 	  <!-- description="Runs the JUnit test suite."> -->
 	  
 	  <mkdir dir="${junit-reports}" />
 	  
 	  <junit printsummary="yes" haltonfailure="no" fork="yes">
-         <sysproperty key="skip_known_issues" value=""/>
 		 <classpath>
 			<path refid="test-classpath"/>
 		 </classpath>
@@ -638,31 +630,7 @@
 		 </batchtest>
 	  </junit>
 	</target>
-
-
-	<target name="junit-tests-all" depends="build-junit-tests">
-	  <!-- description="Runs the JUnit test suite."> -->
-
-	  <mkdir dir="${junit-reports}" />
-
-	  <junit printsummary="yes" haltonfailure="no" fork="yes">
-		 <classpath>
-			<path refid="test-classpath"/>
-		 </classpath>
-
-		 <assertions enableSystemAssertions="true"/>
-
-		 <formatter type="brief" usefile="true"/>
-
-		 <batchtest todir="${junit-reports}">
-			<fileset dir="${junit-test-src-dir}">
-			  <include name="**/*Test.java"/>
-			</fileset>
-		 </batchtest>
-	  </junit>
-	</target>
-
-
+	
 	<!-- 
 		Run the bsh test suite.
 	-->
@@ -672,4 +640,25 @@
 		</antcall>
 	</target>
 
+	<!-- 
+		Run a script specified in the file property using the build 
+		classpath (e.g. latest compiled version)
+			
+			ant -Dfile=foo.bsh bsh
+	-->
+	<target name="debug test" depends="compile-tests">
+                <path id="cp">
+                        <pathelement location="${build-dir}"/>
+                        <fileset refid="lib-fileset"/>
+                </path>
+                <nbjpdastart addressproperty="jpda.address" name="BeanShell2" transport="dt_socket">
+                    <classpath refid="cp"/>
+                </nbjpdastart>
+		<java classname="bsh.Interpreter" fork="true">
+                    <classpath refid="cp"/>
+                    <jvmarg value="-Xdebug"/>
+                    <jvmarg value="-Xrunjdwp:transport=dt_socket,address=${jpda.address}"/>
+                    <arg value="tests/test-scripts/RunAllTests.bsh"/>
+		</java>
+	</target>
 </project>

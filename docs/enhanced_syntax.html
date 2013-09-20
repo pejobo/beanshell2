@@ -1,0 +1,596 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+<TITLE>
+BeanShell Enhanced Syntax
+</TITLE>
+  <style type="text/css">
+  ul.menu {
+    list-style-type: none;
+    line-height: 1;
+  }
+  </style>
+</HEAD>
+<body>
+
+
+BeanShell version 2.2 adds the following enhancements to basic Java syntax:
+<p/>
+<UL>
+<li>Enhanced syntax for creating Arrays, Lists, and Maps</li>
+<li>Operator overloading</li>
+<li>Extended methods</li>
+<li>Automatic type casting for operators and extended methods</li>
+<li>Defined cast operator methods</li>
+<li>Mathematical power operator "**", as in y = x**2;</li>
+<li>Range operator for int, double, and char types:  myIntArray = [0:10];</li>
+</UL>
+
+<p>
+Syntax enhancements are mostly borrowed from Groovy, Python, and MATLAB.
+BeanShell 2.2 can be thought of as "Groovy Lite" for embedded scripting.  The major
+differences are that Groovy is designed to be a primary development language,
+whereas the BeanShell 2.2 aims to provide a rich high level scripting language for
+existing Java classes.  Groovy has an extremely large footprint, where as BeanShell
+is very small.  Groovy classes and scripts must be compiled, whereas BeanShell is much
+more supportive of embedded scripting.  In fact, the main motivation for adding these enhancements
+to BeanShell was frustration with trying to use Groovy as an embedded scripting language.
+
+<p/>
+A requirement of any syntax enhancements was to maintain 100% backward compatibility
+with standard Java syntax.  This effected some of the choices in making these enhancements as
+described below.
+
+<h2>Enhanced Syntax for Arrays, Lists, and Maps</h2>
+
+<h3>Arrays and Lists</h3>
+<p>
+The following examples show how to create arrays and List using BeanShell enhanced syntax.
+<PRE>
+// Create int[] array
+intArray = [1,2,3,4,5];
+
+// Create double[] array
+doubleArray = [1.,2.,3.,4.,5.];
+
+// Create double[] array (With mixed data types, array type determined by the highest order value in the list)
+doubleArray2 = [1,2.,3,4,5];
+
+// Convert the array to a List of Integer values
+intList = [1,2,3,4,5].asList();
+// or
+intList = asList([1,2,3,4,5]);
+
+// Notice the "asList()" method for int[] class above.  This is an extended method added to all array types.
+// You can define your own extended methods on any class type via compiled Java code.
+// Extension methods are described in detail later.
+
+// You can also cast an array to a list as follows:
+intList = (List)([1,2,3,4,5]);
+
+// Generally asList() returns a thin List wrapper that is backed by the original array.
+// Casting as shown above returns a new List that can be modified (depending on the underlying "cast" function)
+// When directly casting an array created using the [] syntax, the expression must be parenthesized as shown above.
+
+// To create a String[] array:
+strArray = ["hello", "world"];
+
+// Convert the String[] array to a list:
+strList = (List)strArray;
+
+</PRE>
+
+<h3>New "Range" Operator</h3>
+
+<p>
+Numeric and character arrays can be creating using the new "range" operator
+as shown in the examples below.
+
+<PRE>
+// Create int[] array from 0 to 10 (inclusive)
+intArray1 = [0:10];
+
+// Create int[] array from 0 to 10 by 2 (inclusive)
+intArray2 = [0:2:10];
+
+// Create int[] array with mixed values
+intArray2 = [0:10, 12:2:20, 25, 30];
+
+// This syntax also works for 2D arrays, or N-Dimensional arrays
+intArray2D = [ [0:10], [20:30] ];  // Creates 2D array
+
+// The range operator also works on double and char data types
+doubleArray1 = [1.0:5.0];  // 1.0 to 5.0 by default 1.0
+
+charArray1 = ['a':'z'];  // a to z
+
+// The range operator does not work outside of the [] brackets
+intArray1 = [0:10];  // Correct
+intArray1 = 0:10;    // Error!!!  This form conflicted with other Java syntax.
+
+
+
+</PRE>
+
+<p>
+The "range" operator is a new operator.  Other scripting languages like Python and Groovy
+implement a range operator using ".." as in [0..10].  This syntax conflicted with
+other standard Java syntax so the ":' character was used instead.  The ":" character was chosen
+because it was also used in MATLAB to delimit ranges.
+
+In BeanShell 2.2 developers can define their own
+methods to implement operator overloading, which means you can also define your own range operator
+methods.  Defining new operators (or extended methods) must be done in Java code you supply.
+Scripted operator overloads or extended methods is not yet supported.  Instructions on how
+you define your own overloaded methods are presented later.  By default, BeanShell 2.2 supports
+a range operator on int, double, and char data types; and any types that can be cast to those types.
+
+<h3>Maps</h3>
+<p>
+BeanShell also features an enhanced syntax for creating Maps (Associative Arrays).
+The syntax is similar to that for arrays as shown in the following examples.
+
+<PRE>
+
+// Create a map that maps String names to their values
+map1 = ["one"=1, "two"=2, "three"=3, "four"=4, "five"=5];
+
+// Create the reverse map that maps numeric values to their String names
+map1 = [1="one", 2="two", 3="three", 4="four", 5="five"];
+
+// Format for maps is:  map = [key1=value2, key2=value2, etc...];
+</PRE>
+
+<p>
+BeanShell uses the "=" character as the delimiter between key and value pairs.
+Other scripting languages like Python and Groovy use the ":" character, however since ":" is
+used as the range delimiter in BeanShell, it was un-available to use for maps.
+
+
+<h2>Operator Overloading</h2>
+
+<p/>
+BeanShell 2.2 implements operator overloading in a similar way as Groovy and Jython,
+by invoking a function corresponding to the operator symbol.
+For example, the + operator in the expression:<p>
+result = lhs+rhs;<p>
+is mapped to a static function plus(Type1 lhs, Type2 rhs), where Type1 and Type2 are the
+class types of each argument.  Out of the box support is provided for numeric values and arrays.
+<pre>
+
+// Out of the box, BeanShell 2.2 defines Mathematical overloads for primitive arrays.
+array1 = [1.,2,3,4,5,6];
+array2 = array1+5;        // Add 5 to each element in the array
+array2 = 5+array1;        // Add 5 to each element in the array (works left or right)
+array3 = 2*array1+3;      // Multiply array by 2, then add 3
+array4 = array1 + array3; // Adds arrays element by element.  Must have same length or an Exception will be thrown.
+
+// BeanShell 2.2 defines a new mathematical "power" operator
+array1Squared = array1**2;  // Squares each element in array1
+
+The power operator works on scalar values, and can be overloaded by your own methods.
+A complete list of operator overloads currently supported are given later.
+More may be added in the future.
+
+</pre>
+
+The following table list all of the current "overloadable" operators and the function name they are mapped to.
+<p/>
+<TABLE BORDER=2 CELLSPACING=2 CELLPADDING=1">
+<TR ALIGN="left" VALIGN="middle">
+	<TH>Operator Symbol</TH>
+	<TH>Function/Method Name</TH>
+<TR ALIGN="left" VALIGN="middle">
+	<TD>+</TD>
+	<TD>plus</TD>
+</TR>
+<TR ALIGN="left" VALIGN="middle">
+	<TD>-</TD>
+	<TD>minus</TD>
+</TR>
+<TR ALIGN="left" VALIGN="middle">
+	<TD>*</TD>
+	<TD>times</TD>
+</TR>
+<TR ALIGN="left" VALIGN="middle">
+	<TD>/</TD>
+	<TD>divide</TD>
+</TR>
+<TR ALIGN="left" VALIGN="middle">
+	<TD>+=</TD>
+	<TD>plusEquals</TD>
+</TR>
+<TR ALIGN="left" VALIGN="middle">
+	<TD>-=</TD>
+	<TD>minusEquals</TD>
+</TR>
+<TR ALIGN="left" VALIGN="middle">
+	<TD>*=</TD>
+	<TD>timesEquals</TD>
+</TR>
+<TR ALIGN="left" VALIGN="middle">
+	<TD>/=</TD>
+	<TD>divideEquals</TD>
+</TR>
+<TR ALIGN="left" VALIGN="middle">
+	<TD>[]</TD>
+	<TD>getAt</TD>
+</TR>
+<TR ALIGN="left" VALIGN="middle">
+	<TD>[]</TD>
+	<TD>putAt</TD>
+</TR>
+<TR ALIGN="left" VALIGN="middle">
+	<TD>()</TD>
+	<TD>cast</TD>
+</TR>
+<TR ALIGN="left" VALIGN="middle">
+	<TD>-</TD>
+	<TD>negate</TD>
+</TR>
+<TR ALIGN="left" VALIGN="middle">
+	<TD>**</TD>
+	<TD>power</TD>
+</TR>
+<TR ALIGN="left" VALIGN="middle">
+	<TD>:</TD>
+	<TD>range</TD>
+</TR>
+</TABLE>
+
+<p/>
+If BeanShell cannot find an overloaded method for specific data types, it will try to
+"cast" the data types to the closest matching types.  It does this by looking for a cast method
+to convert the data.  Casting is itself an operator overload.  The following list shows the operator
+overloading functions and cast methods built into BeanShell 2.2.  The BeanShell API javadocs documents the
+classes that implement these operators in the package bsh.operators.standard.
+
+<h4>List Pre-Defined Operator Overloads</h4>
+String = plus(String,String)<br>
+String[] = plus(String[],String[])<br>
+String[] = plus(String[],String)<br>
+String[] = plus(String,String[])<br>
+double[] = plus(double[],Double)<br>
+double[] = plus(Double,double[])<br>
+double[] = plus(double[],double[])<br>
+Double = plus(Double,Double)<br>
+int[] = plus(int[],int[])<br>
+Integer = plus(Integer,Integer)<br>
+int[] = plus(Integer,int[])<br>
+int[] = plus(int[],Integer)<br>
+float[] = plus(float[],float[])<br>
+float[] = plus(Float,float[])<br>
+float[] = plus(float[],Float)<br>
+Float = plus(Float,Float)<br>
+int[] = minus(Integer,int[])<br>
+int[] = minus(int[],int[])<br>
+Integer = minus(Integer,Integer)<br>
+int[] = minus(int[],Integer)<br>
+float[] = minus(float[],float[])<br>
+Float = minus(Float,Float)<br>
+float[] = minus(float[],Float)<br>
+float[] = minus(Float,float[])<br>
+double[] = minus(Double,double[])<br>
+Double = minus(Double,Double)<br>
+double[] = minus(double[],Double)<br>
+double[] = minus(double[],double[])<br>
+int[] = times(int[],int[])<br>
+int[] = times(int[],Integer)<br>
+int[] = times(Integer,int[])<br>
+Integer = times(Integer,Integer)<br>
+double[] = times(Double,double[])<br>
+double[] = times(double[],Double)<br>
+double[] = times(double[],double[])<br>
+Double = times(Double,Double)<br>
+Float = times(Float,Float)<br>
+float[] = times(Float,float[])<br>
+float[] = times(float[],Float)<br>
+float[] = times(float[],float[])<br>
+float[] = divide(Float,float[])<br>
+Float = divide(Float,Float)<br>
+float[] = divide(float[],Float)<br>
+float[] = divide(float[],float[])<br>
+double[] = divide(Double,double[])<br>
+double[] = divide(double[],Double)<br>
+double[] = divide(double[],double[])<br>
+Double = divide(Double,Double)<br>
+Integer = divide(Integer,Integer)<br>
+int[] = divide(int[],Integer)<br>
+int[] = divide(int[],int[])<br>
+int[] = divide(Integer,int[])<br>
+int[] = getAt(int[],int[])<br>
+Integer = getAt(int[],Integer)<br>
+Map = getAt(Map,Object[])<br>
+Object = getAt(Map,Object)<br>
+Object = getAt(List,Integer)<br>
+List = getAt(List,int[])<br>
+Double = getAt(double[],Integer)<br>
+double[] = getAt(double[],int[])<br>
+float[] = getAt(float[],int[])<br>
+Float = getAt(float[],Integer)<br>
+void = putAt(int[],Integer,Integer)<br>
+void = putAt(int[],int[],int[])<br>
+void = putAt(float[],int[],float[])<br>
+void = putAt(float[],Integer,Float)<br>
+void = putAt(double[],int[],double[])<br>
+void = putAt(double[],Integer,Double)<br>
+void = putAt(List,int[],int[])<br>
+void = putAt(List,Integer,Integer)<br>
+void = putAt(Map,Object,Object)<br>
+void = putAt(Map,Object[],Map)<br>
+void = putAt(Map,Object[],Object[])<br>
+float[] = power(float[],Float)<br>
+Float = power(Float,Float)<br>
+Double = power(Double,Double)<br>
+double[] = power(double[],Double)<br>
+int[] = range(Integer,Integer,Integer)<br>
+int[] = range(Integer,Integer)<br>
+double[] = range(Double,Double,Double)<br>
+double[] = range(Double,Double)<br>
+char[] = range(Character,Character)<br>
+<br>
+// Casting Syntax<br>
+castObjectType = (TargetType)originalType;<br>
+<br>
+Double = cast(int)<br>
+Double = cast(float)<br>
+Double = cast(double)<br>
+double[] = cast(float[])<br>
+Double = cast(Integer)<br>
+Double = cast(Float)<br>
+double[] = cast(int[])<br>
+Object[] = cast(double[])<br>
+List = cast(double[])<br>
+List = cast(float[])<br>
+List = cast(int[])<br>
+List = cast(Object[])<br>
+Object[] = cast(int[])<br>
+Integer = cast(int)<br>
+float[] = cast(int[])<br>
+Float = cast(Integer)<br>
+Float = cast(int)<br>
+Float = cast(float)<br>
+Object[] = cast(float[])<br>
+
+
+<h2>Enhanced Index Access for Arrays, List, and Maps</h2>
+<p/>
+In the operator overlading table notice the [] "indexing" operator.  This is mapped to a "getAt" function
+or a "putAt" function depending on whether the target object is on the left hand side of an equals sign.
+This is used to implement enhanced getter and setter behavior for Arrays, Lists, and Maps.
+
+<pre>
+
+// Normal array indexing works as usual
+
+x2 = doubleArray[2];
+doubleArray[2] = x2+1;
+
+// You can also work on sub-arrays by providing array of indices
+
+subsetArray = doubleArray[ [2,3,4] ];     // gets elements 2,3,4 from array named doubleArray.  "getAt" operation.
+
+doubleArray[ [2,3,4] ] = subsetArray+1;   // adds 1 to subset, sets elements 2,3,4 of array.  "putAt" operation.
+
+// This type of indexing works equally well on List and Map data types
+
+// Lists
+element2 = myList[2];       // gets element 2 from List
+
+subList = myList[ [2:5] ];  // gets elements 2 to 5 inclusive
+
+myList[ [2:5] ] = subList;  // sets elements 2 to 5 inclusive
+
+// Maps
+entry2 = myMap["two"];                       // equivalent to Java syntax: myMap.get("two").  "getAt" operator for map
+
+subMap = myMap[ ["two","three","four"] ];    // get sub-map,  syntax not available in Java
+
+myMap[ ["two","three","four"] ] = subMap;    // assign entries from other map, syntax not available in Java
+
+myMap[ ["two","three","four"] ] = [2,3,4];   // assign entries from other array or list, syntax not available in Java
+
+</pre>
+
+
+<h2>Extended Methods/Functions</h2>
+<p/>
+BeanShell 2.2 supports something called Extended Methods.  An extended method in BeanShell is a
+static function that acts or appears as if it were an instance method of a class.
+Any static method can be used as if it were an instance method of the first argument type.
+Extended methods (and operator overloads) can only be defined in Java code.  They cannot be defined in
+script.  Below is an example of how to define an extended method in Java code, and use it in BeanShell script.
+
+<pre>
+
+// In Java code define class Foo and Bar
+class Foo {
+
+/**
+ * Declare static method sayHello
+ * Must mark it as an extended method using the @Extension annotation
+ */
+  @Extension
+  public static void sayHello(Bar bar, String lastName) {
+     print("Hello " + bar.firstName + " " + lastName);
+  }
+
+}
+
+// In Java code define class Bar
+class Bar {
+  String firstName;
+}
+
+When you invoke BeanShell, the Java classes above must be part of your classpath
+
+
+// In BeanShell Script, use the Java classes as follows
+import Foo;
+import Bar;
+
+bar = new Bar();
+bar.firstName = "Scott";
+
+// Invoke sayHello() as if it were an instance method of Bar
+bar.sayHello("Stevenson");
+
+// Extended methods can also be invoked as if they were static functions
+sayHello(bar, "Stevenson");
+
+</pre>
+
+<p/>
+When you invoke an instance method in BeanShell, it first looks to see if there is an actual
+instance method defined for the target class and invokes that if present.  If it cannot find
+an actual instance method, BeanShell will look for a static method on any imported class where the first
+argument type is compatible with the target object.  If a method is found it is invoked.  The target object
+is passed into the function as the first argument, and any additional arguments are provided in the
+argument list to the instance function.
+
+<p/>
+Extended methods must be marked using the @Extension annotation.  This is unfortunate
+because it creates a dependency on BeanShell in the target source code, but without this
+nearly every static method would be considered an extended method.  I originally
+tried not using this annotation tag and the results were not good.  If you do not want to make
+your target code dependent on BeanShell, an alternative is to simply copy the source for this
+annotation and place it inside your own source code folder.  The bare bones definition of this
+annotation is listed below.
+
+<pre>
+// Create a package and source file for Extension.java in your source tree
+// Copy and paste this code to the file
+package bsh.operators;
+
+import java.lang.annotation.*;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Extension {
+
+}
+
+
+</pre>
+
+<p/>
+Out of the box, BeanShell defines only a few extended methods for mathematical operations.  The classes that implement
+these are imported by default in new instances of a NameSpace or Interpreter.  The API javadocs for these
+are part of the bsh.operators.standard package.  They are summarized below.
+<p/>
+double[] = cos(double[]); // cosine function (radians)<br>
+double[] = cosd(double[]); // cosine function (degrees)<br>
+double[] = sin(double[]); // etc.<br>
+double[] = sind(double[])<br>
+double[] = tan(double[])<br>
+double[] = tand(double[])<br>
+double[] = toDegrees(double[])<br>
+double[] = toRadians(double[])<br>
+Double = cos(Double)<br>
+Double = cosd(Double)<br>
+Double = sin(Double)<br>
+Double = sind(Double)<br>
+Double = tan(Double)<br>
+Double = tand(Double)<br>
+Double = toDegrees(Double)<br>
+Double = toRadians(Double)<br>
+<br>
+// These methods also support integer and float types by vurtue of automatic casting.<br>
+<br>
+
+
+<h2>How To Define Your Own Operator Overloads and Extended Functions</h2>
+<p/>
+The previous section showed how to define your own extended function for use in BeanShell.
+Operator overloading functions, including casting and indexing, work the same way except
+there is no need to mark them with an annotation tag.  To overload an operator, you provide a
+static Java function that follows the naming convention listed for overloaded operators.  The
+following example shows how to implement overloads for + and -.
+
+<p/>
+We first create two classes that represent a 3-Dimensional Point with coordinates x, y, z, and a Vector
+with direction x, y, z.  These must be Java classes, not scripted classes, and be part of the classpath
+in BeanShell.
+
+<pre>
+
+// Define/provide Point class as Java
+public class Point {
+  public double x;
+  public double y;
+  public double z;
+
+  // Overload + operator
+  public static Point plus(Point p, Vector v) {
+     Point r = new Point();
+     r.x = p.x+v.x;
+     r.y = p.y+v.y;
+     r.z = p.z+v.z;
+     return r;
+  }
+  // Overload - operator
+  public static Point minus(Point p, Vector v) {
+     Point r = new Point();
+     r.x = p.x-v.x;
+     r.y = p.y-v.y;
+     r.z = p.z-v.z;
+     return r;
+  }
+  // Overload - operator
+  public static Vector minus(Point p1, Point p2) {
+     Vector r = new Vector();
+     r.x = p1.x-p2.x;
+     r.y = p1.y-p2.y;
+     r.z = p1.z-p2.z;
+     return r;
+  }
+
+}
+
+// Define/provide Vector class as Java
+public class Vector {
+  public double x;
+  public double y;
+  public double z;
+
+  // Overload + operator
+  public static Vector plus(Vector v1, Vector v2) {
+     Vector r = new Vector();
+     r.x = v1.x+v2.x;
+     r.y = v1.y+v2.y;
+     r.z = v1.z+v2.z;
+     return r;
+  }
+  // Overload - operator
+  public static Vector minus(Vector v1, Vector v2) {
+     Vector r = new Vector();
+     r.x = v1.x-v2.x;
+     r.y = v1.y-v2.y;
+     r.z = v1.z-v2.z;
+     return r;
+  }
+}
+
+Run BeanShell and include the above Java classes in your classpath.  The classes must then be
+imported into the script/scope where you want to use them.  To define the operator overloads,
+it is not good enough to import the package that contains the classes, the specific classes that
+define the overloading functions must be imported explicitly.
+
+// BeanShell script
+import Point;
+import Vector;
+
+p1 = new Point();
+p2 = new Point();
+p3 = new Point();
+
+v1 = p2-p1;  // Subtracting two points creates a Vector defining the distance and direction between them.
+p4 = p3+v1;  // Add that vector to another point creates a new Point at the offset location.
+
+</pre>
+
+</section>
+
+
+</body>
+</HTML>

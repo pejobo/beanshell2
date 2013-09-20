@@ -30,43 +30,69 @@
  *  http://www.pat.net/~pat/                                                 *
  *                                                                           *
  *****************************************************************************/
-
-
 package bsh;
 
-/**
-	Implement casts.
+import bsh.operators.OperatorProvider;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-	I think it should be possible to simplify some of the code here by
-	using the Types.getAssignableForm() method, but I haven't looked 
-	into it.
-*/
+/**
+Implement casts.
+
+I think it should be possible to simplify some of the code here by
+using the Types.getAssignableForm() method, but I haven't looked 
+into it.
+ */
 class BSHCastExpression extends SimpleNode {
 
-    public BSHCastExpression(int id) { super(id); }
+    Method castMethod;
 
-	/**
-		@return the result of the cast.
-	*/
-	public Object eval(
-		CallStack callstack, Interpreter interpreter ) throws EvalError
-    {
-		NameSpace namespace = callstack.top();
-        Class toType = ((BSHType)jjtGetChild(0)).getType( 
-			callstack, interpreter );
-		SimpleNode expression = (SimpleNode)jjtGetChild(1);
+    public BSHCastExpression(int id) {
+        super(id);
+    }
+
+    /**
+    @return the result of the cast.
+     */
+    public Object eval(
+            CallStack callstack, Interpreter interpreter) throws EvalError {
+        NameSpace namespace = callstack.top();
+        Class toType = ((BSHType) jjtGetChild(0)).getType(
+                callstack, interpreter);
+        SimpleNode expression = (SimpleNode) jjtGetChild(1);
 
         // evaluate the expression
         Object fromValue = expression.eval(callstack, interpreter);
         Class fromType = fromValue.getClass();
 
-		// TODO: need to add isJavaCastable() test for strictJava
-		// (as opposed to isJavaAssignable())
-		try {
-			return Types.castObject( fromValue, toType, Types.CAST );
-		} catch ( UtilEvalError e ) {
-			throw e.toEvalError( this, callstack  );
-		}
+        // TODO: need to add isJavaCastable() test for strictJava
+        // (as opposed to isJavaAssignable())
+        try {
+            //SWS BEGIN  Insert code for overloaded cast operations
+            Object fromValue2 = Primitive.unwrap(fromValue);
+            Class fromType2 = (fromValue2!=null)?fromValue2.getClass():null;
+            castMethod = OperatorProvider.findCastMethod(interpreter.getNameSpace(),fromType2, toType, castMethod);
+            if (castMethod != null) {
+                Object toValue;
+                try {
+                    toValue = castMethod.invoke(null, fromValue2);
+                    return Primitive.wrap(toValue, toType);  // Wraps value if primitive, or returns toValue unchanged.
+                }
+                catch (IllegalAccessException ex) {
+                }
+                catch (IllegalArgumentException ex) {
+                }
+                catch (InvocationTargetException ex) {
+                }
+            }
+            //SWS END
+            
+            return Types.castObject(fromValue, toType, Types.CAST);
+        }
+        catch (UtilEvalError e) {
+            throw e.toEvalError(this, callstack);
+        }
     }
-
 }

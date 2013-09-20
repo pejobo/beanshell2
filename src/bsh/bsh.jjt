@@ -660,6 +660,139 @@ void ArrayInitializer() #ArrayInitializer :
 		( LOOKAHEAD(2) "," VariableInitializer() )* ] [ "," ] "}"
 }
 
+// BEGIN SWS CHANGES
+
+// BEGIN SWS CHANGES
+void RangeExpression() #RangeExpression :
+{ }
+{
+  AdditiveExpression() ":" AdditiveExpression() (":" AdditiveExpression())?
+}
+// END SWS CHANGES
+
+
+// Array production based on syntax in ArrayInitializer production
+void Array() #Array :
+{}
+{
+LOOKAHEAD(2)
+  "[" ArrayEntry() ( "," ArrayEntry() )* "]"
+|
+  "[" "]"
+}
+
+void ArrayEntry() :
+{}
+{
+  LOOKAHEAD(RangeExpression())
+  RangeExpression()
+| AdditiveExpression()
+}
+
+// Map production based on syntax in ArrayInitializer production
+void Map() #Map :
+{}
+{
+LOOKAHEAD(2)
+  "[" MapEntry() ("," MapEntry() )* "]"
+|
+  "[" (":" | "=") "]"
+}
+
+// Map production is my own (hope it works)
+void MapEntry() #MapEntry :
+{}
+{
+   MapKey() "=" Expression()
+}
+
+void MapKey() #MapKey :
+{
+    Token x;
+    boolean b;
+    String literal;
+    char ch;
+}
+{
+  x = <IDENTIFIER> 
+  { 
+  	jjtThis.value = x.image;
+        jjtThis.isVariable = true;
+  }
+//|
+//  "%"x = <IDENTIFIER>"%"
+//  { 
+//  	jjtThis.value = x.image;
+//        jjtThis.isVariable = true;
+//  }
+|
+  x = <INTEGER_LITERAL>
+  {
+    literal = x.image;
+    ch = literal.charAt(literal.length()-1);
+    if(ch == 'l' || ch == 'L')
+    {
+        literal = literal.substring(0,literal.length()-1);
+		try {
+        	jjtThis.value = new Long(literal);
+		} catch ( NumberFormatException e ) {
+			throw createParseException( e.getMessage(), e );
+		}
+    }
+    else
+		try {
+        	jjtThis.value = new Integer(literal);
+		} catch ( NumberFormatException e ) {
+			throw createParseException( e.getMessage(), e );
+		}
+  }
+|
+  x = <FLOATING_POINT_LITERAL>
+  {
+    literal = x.image;
+    ch = literal.charAt(literal.length()-1);
+    if(ch == 'f' || ch == 'F')
+    {
+        literal = literal.substring(0,literal.length()-1);
+        jjtThis.value = new Float(literal);
+    }
+    else
+    {
+        if(ch == 'd' || ch == 'D')
+            literal = literal.substring(0,literal.length()-1);
+
+        jjtThis.value = new Double( literal );
+    }
+  }
+|
+  x = <CHARACTER_LITERAL> {
+		try {
+    		jjtThis.charSetup( x.image.substring(1, x.image.length() - 1) );
+		} catch ( Exception e ) {
+			throw createParseException("Error parsing character: "+x.image, e);
+		}
+    }
+|
+  x = <STRING_LITERAL> {
+		try {
+			jjtThis.stringSetup( x.image.substring(1, x.image.length() - 1) );
+		} catch ( Exception e ) {
+			throw createParseException("Error parsing string: "+x.image, e);
+		}
+    }
+|
+  x = <LONG_STRING_LITERAL> {
+		try {
+			jjtThis.value = x.image.substring(3, x.image.length() - 3);
+		} catch ( Exception e ) {
+			throw createParseException("Error parsing long string: "+x.image, e);
+		}
+    }
+
+}
+
+// END SWS CHANGES
+
 void FormalParameters() #FormalParameters :
 {}
 {
@@ -754,7 +887,9 @@ void Expression() :
   Assignment()
 |
   ConditionalExpression()
+
 }
+
 
 void Assignment() #Assignment :
 { int op ; }
@@ -863,6 +998,7 @@ void ShiftExpression() :
   { jjtThis.kind = t.kind; } #BinaryExpression(2) )*
 }
 
+
 void AdditiveExpression() :
 { Token t = null; }
 {
@@ -875,8 +1011,16 @@ void AdditiveExpression() :
 void MultiplicativeExpression() :
 { Token t = null; }
 {
-  UnaryExpression() ( ( t= "*" | t= "/" | t= "%" )
-  UnaryExpression() { jjtThis.kind = t.kind; } #BinaryExpression(2) )*
+//  UnaryExpression() ( ( t= "*" | t= "/" | t= "%" )
+//  UnaryExpression() { jjtThis.kind = t.kind; } #BinaryExpression(2) )*
+ PowerExpression() ( ( t= "*" | t= "/" | t= "%" )
+  PowerExpression() { jjtThis.kind = t.kind; } #BinaryExpression(2) )*
+}
+
+void PowerExpression() #PowerExpression :
+{ }
+{
+  UnaryExpression() ("**" UnaryExpression())*
 }
 
 void UnaryExpression() :
@@ -976,6 +1120,12 @@ void PrimaryPrefix() : { }
 	Type()
 |
   AmbiguousName()
+
+// BEGIN SWS CHANGES
+|
+  (LOOKAHEAD(3) Map() | Array())
+
+// END SWS CHANGES
 
 /*
 |
@@ -1149,6 +1299,7 @@ void AllocationExpression() #AllocationExpression :
 		// SYNTACTIC_LOOKAHEAD
 		Arguments() [ LOOKAHEAD(2) Block() ]
 	)
+
 }
 
 void ArrayDimensions() #ArrayDimensions :

@@ -34,6 +34,7 @@
 
 package	bsh;
 
+import bsh.operators.OperatorProvider;
 import java.io.Serializable;
 import java.util.List;
 import java.util.ArrayList;
@@ -94,6 +95,8 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 	private List<Object> importedObjects;
 	private List<Class> importedStatic;
 	private String packageName;
+        
+        private OperatorProvider extendedMethods = new OperatorProvider();
 
 	transient private BshClassManager classManager;
 
@@ -296,7 +299,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		@param recurse determines whether we will search for the variable in
 		  our parent's scope before assigning locally.
 	*/
-    void setVariable( 
+    protected void setVariable( 
 		String name, Object value, boolean strictJava, boolean recurse ) 
 		throws UtilEvalError 
 	{
@@ -795,6 +798,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 			importedClasses = new HashMap<String,String>();
 
 		importedClasses.put( Name.suffix(name, 1), name );
+                extendedMethods.cacheExtendedMethods(name);
 		nameSpaceChanged();
     }
 
@@ -1132,30 +1136,31 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 				Found the full name in imported classes.
 			*/
 			// Try to make the full imported name
-			Class clas = classForName(fullname);
+			Class clas=classForName(fullname);
 			
-			if ( clas != null )
-				return clas;
-
 			// Handle imported inner class case
-			// Imported full name wasn't found as an absolute class
-			// If it is compound, try to resolve to an inner class.  
-			// (maybe this should happen in the BshClassManager?)
+			if ( clas == null ) 
+			{
+				// Imported full name wasn't found as an absolute class
+				// If it is compound, try to resolve to an inner class.  
+				// (maybe this should happen in the BshClassManager?)
 
-			if ( Name.isCompound( fullname ) )
-				try {
-					clas = getNameResolver( fullname ).toClass();
-				} catch ( ClassNotFoundException e ) { /* not a class */ }
-			else 
-				if ( Interpreter.DEBUG ) Interpreter.debug(
-					"imported unpackaged name not found:" +fullname);
+				if ( Name.isCompound( fullname ) )
+					try {
+						clas = getNameResolver( fullname ).toClass();
+					} catch ( ClassNotFoundException e ) { /* not a class */ }
+				else 
+					if ( Interpreter.DEBUG ) Interpreter.debug(
+						"imported unpackaged name not found:" +fullname);
 
-			// If found cache the full name in the BshClassManager
-			if ( clas != null ) {
-				// (should we cache info in not a class case too?)
-				getClassManager().cacheClassInfo( fullname, clas );
+				// If found cache the full name in the BshClassManager
+				if ( clas != null ) {
+					// (should we cache info in not a class case too?)
+					getClassManager().cacheClassInfo( fullname, clas );
+					return clas;
+				}
+			} else
 				return clas;
-			}
 
 			// It was explicitly imported, but we don't know what it is.
 			// should we throw an error here??
@@ -1216,8 +1221,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 	protected void getAllNamesAux( List<String> list ) 
 	{
 		list.addAll( variables.keySet() );
-		if ( methods != null )
-			list.addAll( methods.keySet() );
+		list.addAll( methods.keySet() );
 		if ( parent != null )
 			parent.getAllNamesAux( list );
 	}
@@ -1341,6 +1345,13 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 			precedence rules...  so for max efficiency put the most common
 			ones later.
 		*/
+                importClass("bsh.operators.standard.DoubleMethods");
+                importClass("bsh.operators.standard.FloatMethods");
+                importClass("bsh.operators.standard.IntegerMethods");
+                importClass("bsh.operators.standard.MathFunctions");
+                importClass("bsh.operators.standard.ListMethods");
+                importClass("bsh.operators.standard.MapMethods");
+                importClass("bsh.operators.standard.StringMethods");
 		importClass("bsh.EvalError");
 		importClass("bsh.Interpreter");
 		importPackage("javax.swing.event");
@@ -1533,5 +1544,9 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		}
 		return new ArrayList<T>(list);
 	}
+
+    public OperatorProvider getExtendedMethodProvider() {
+        return this.extendedMethods;
+    }
 
 }
