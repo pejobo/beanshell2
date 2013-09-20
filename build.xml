@@ -16,9 +16,7 @@
 
 <property name="file" value=""/>
 
-    <property name="ant.build.javac.target" value="1.5" />
-    <property name="ant.build.javac.source" value="1.5" />
-	<property name="version" value="2.2.0"/>
+	<property name="version" value="2.1b1"/>
 	<property name="deprecation" value="on"/>
 	<property name="Specification-Title" value="BeanShell2" />
 	<property name="Specification-Version" value="${version}" />
@@ -366,14 +364,7 @@
 	<!-- Jar targets -->
 
 	<target name="jarcore" depends="compile,_distdir">
-        <fail message="Please use ant 1.8">
-            <condition>
-                <not>
-                    <contains string="${ant.version}" substring="1.8"/>
-                </not>
-            </condition>
-        </fail>
-    <delete file="${core-jar}"/>
+		<delete file="${core-jar}"/>
 		<jar jarfile="${core-jar}">
 			<manifest>
 				<attribute name="Main-Class" value="bsh.Interpreter" />
@@ -585,7 +576,7 @@
 		  Set up some properties for use with the testing framework
 	-->
 
-	<property name="junit.jar" value="${lib-dir}/testing/junit-4.8.2.jar"/>
+	<property name="junit.jar" value="${lib-dir}/testing/junit-4.4.jar"/>
 	
 	<!-- JUnit source files. -->
 	<property name="junit-test-src-dir" value="tests/junitTests/src" />
@@ -616,13 +607,13 @@
 	  </javac>
 	</target>
 	
-	<target name="junit-tests" depends="build-junit-tests">
+	<target name="junit-tests"
+			  depends="build-junit-tests">
 	  <!-- description="Runs the JUnit test suite."> -->
 	  
 	  <mkdir dir="${junit-reports}" />
 	  
 	  <junit printsummary="yes" haltonfailure="no" fork="yes">
-         <sysproperty key="skip_known_issues" value=""/>
 		 <classpath>
 			<path refid="test-classpath"/>
 		 </classpath>
@@ -638,31 +629,7 @@
 		 </batchtest>
 	  </junit>
 	</target>
-
-
-	<target name="junit-tests-all" depends="build-junit-tests">
-	  <!-- description="Runs the JUnit test suite."> -->
-
-	  <mkdir dir="${junit-reports}" />
-
-	  <junit printsummary="yes" haltonfailure="no" fork="yes">
-		 <classpath>
-			<path refid="test-classpath"/>
-		 </classpath>
-
-		 <assertions enableSystemAssertions="true"/>
-
-		 <formatter type="brief" usefile="true"/>
-
-		 <batchtest todir="${junit-reports}">
-			<fileset dir="${junit-test-src-dir}">
-			  <include name="**/*Test.java"/>
-			</fileset>
-		 </batchtest>
-	  </junit>
-	</target>
-
-
+	
 	<!-- 
 		Run the bsh test suite.
 	-->

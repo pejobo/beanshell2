@@ -476,6 +476,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		if ( parent != null && parent != JAVACODE )
 			return parent.getClassManager();
 
+System.out.println("experiment: creating class manager");
 		classManager = BshClassManager.createClassManager( null/*interp*/ );
 		
 		//Interpreter.debug("No class manager namespace:" +this);
@@ -1132,30 +1133,31 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 				Found the full name in imported classes.
 			*/
 			// Try to make the full imported name
-			Class clas = classForName(fullname);
+			Class clas=classForName(fullname);
 			
-			if ( clas != null )
-				return clas;
-
 			// Handle imported inner class case
-			// Imported full name wasn't found as an absolute class
-			// If it is compound, try to resolve to an inner class.  
-			// (maybe this should happen in the BshClassManager?)
+			if ( clas == null ) 
+			{
+				// Imported full name wasn't found as an absolute class
+				// If it is compound, try to resolve to an inner class.  
+				// (maybe this should happen in the BshClassManager?)
 
-			if ( Name.isCompound( fullname ) )
-				try {
-					clas = getNameResolver( fullname ).toClass();
-				} catch ( ClassNotFoundException e ) { /* not a class */ }
-			else 
-				if ( Interpreter.DEBUG ) Interpreter.debug(
-					"imported unpackaged name not found:" +fullname);
+				if ( Name.isCompound( fullname ) )
+					try {
+						clas = getNameResolver( fullname ).toClass();
+					} catch ( ClassNotFoundException e ) { /* not a class */ }
+				else 
+					if ( Interpreter.DEBUG ) Interpreter.debug(
+						"imported unpackaged name not found:" +fullname);
 
-			// If found cache the full name in the BshClassManager
-			if ( clas != null ) {
-				// (should we cache info in not a class case too?)
-				getClassManager().cacheClassInfo( fullname, clas );
+				// If found cache the full name in the BshClassManager
+				if ( clas != null ) {
+					// (should we cache info in not a class case too?)
+					getClassManager().cacheClassInfo( fullname, clas );
+					return clas;
+				}
+			} else
 				return clas;
-			}
 
 			// It was explicitly imported, but we don't know what it is.
 			// should we throw an error here??
@@ -1216,8 +1218,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 	protected void getAllNamesAux( List<String> list ) 
 	{
 		list.addAll( variables.keySet() );
-		if ( methods != null )
-			list.addAll( methods.keySet() );
+		list.addAll( methods.keySet() );
 		if ( parent != null )
 			parent.getAllNamesAux( list );
 	}
