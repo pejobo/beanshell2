@@ -239,17 +239,13 @@ public class ClassManagerImpl extends BshClassManager
 				c = Class.forName( name );
 			} catch ( ClassNotFoundException e ) {
 				// fall through
-/* I disagree with letting this fall through  -fschmidt
 			} catch ( NoClassDefFoundError e ) {
 				// fall through
-*/
 			}
 
-		// Try scripted class
-		if ( c == null )
-			c = loadSourceClass( name );
-
 		// Cache result (or null for not found)
+		// Note: plainClassForName already caches, so it will be redundant
+		// in that case, however this process only happens once
 		cacheClassInfo( name, c );
 
 		return c;

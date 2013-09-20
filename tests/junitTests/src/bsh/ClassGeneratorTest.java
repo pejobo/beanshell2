@@ -2,26 +2,23 @@ package bsh;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
 
 import java.util.concurrent.Callable;
 
 import static org.junit.Assert.assertEquals;
 
-@RunWith(FilteredTestRunner.class)
 public class ClassGeneratorTest {
 
 	@Test
 	public void create_class_with_default_constructor() throws Exception {
-		TestUtil.eval("class X1 {}");
+		eval("class X1 {}");
 	}
 
 
 	@Test
 	public void create_instance() throws Exception {
 		Assert.assertNotNull(
-			TestUtil.eval(
+			eval(
 				"class X2 {}",
 				"return new X2();"
 		));
@@ -30,7 +27,7 @@ public class ClassGeneratorTest {
 
 	@Test
 	public void constructor_args() throws Exception {
-		final Object[] oa = (Object[]) TestUtil.eval(
+		final Object[] oa = (Object[]) eval(
 			"class X3 implements java.util.concurrent.Callable {",
 				"Object _instanceVar;",
 				"public X3(Object arg) { _instanceVar = arg; }",
@@ -44,7 +41,7 @@ public class ClassGeneratorTest {
 
 	@Test
 	public void outer_namespace_visibility() throws Exception {
-		final Callable callable = (Callable) TestUtil.eval(
+		final Callable callable = (Callable) eval(
 			"class X4 implements java.util.concurrent.Callable {",
 				"public Object call() { return var; }",
 			"}",
@@ -58,7 +55,7 @@ public class ClassGeneratorTest {
 
 	@Test
 	public void static_fields_should_be_frozen() throws Exception {
-		final Callable callable = (Callable) TestUtil.eval(
+		final Callable callable = (Callable) eval(
 				"var = 0;",
 				"class X5 implements java.util.concurrent.Callable {",
 					"static final Object VAR = var;",
@@ -72,20 +69,17 @@ public class ClassGeneratorTest {
 	}
 
 
-	/**
-	 * See also failing test script "classinterf1.bsh" and
-	 * <a href="http://code.google.com/p/beanshell2/issues/detail?id=46">issue #46</a>.
-	 */
 	@Test
-	@Category(KnownIssue.class)
-	public void define_interface_with_constants() throws Exception {
-		// these three are treated equal in java
-		TestUtil.eval("interface Test { public static final int x = 1; }");
-		TestUtil.eval("interface Test { static final int x = 1; }");
-		TestUtil.eval("interface Test { final int x = 1; }");
-		// these three are treated equal in java
-		TestUtil.eval("interface Test { public static int x = 1; }");
-		TestUtil.eval("interface Test { static int x = 1; }");
-		TestUtil.eval("interface Test { int x = 1; }");
+	public void inner_class() throws Exception {
+		
+	}
+
+
+	public Object eval(final String ... code) throws Exception {
+		StringBuffer buffer = new StringBuffer();
+		for (String s : code) {
+			buffer.append(s).append('\n');
+		}
+		return new Interpreter().eval(buffer.toString());
 	}
 }

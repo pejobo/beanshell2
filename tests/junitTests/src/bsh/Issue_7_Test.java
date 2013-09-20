@@ -1,17 +1,13 @@
 package bsh;
 
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
 
 import java.io.File;
 
-@RunWith(FilteredTestRunner.class)
 public class Issue_7_Test {
 
 	@Test
-	@Category(KnownIssue.class)
-	public void run_script_class13() throws Exception {
+	public void run() throws Exception {
 		new OldScriptsTest.TestBshScript( new File("tests/test-scripts/class13.bsh")).runTest();
 	}
 
