@@ -111,30 +111,27 @@ class BSHAllocationExpression extends SimpleNode
 				return constructWithClassBody( 
 					type, args, body, callstack, interpreter );
 		} else
-			return constructObject( type, args, callstack, interpreter );
+			return constructObject( type, args, callstack );
     }
 
-
-	private Object constructObject(Class<?> type, Object[] args, CallStack callstack, Interpreter interpreter ) throws EvalError {
-		final boolean isGeneratedClass = GeneratedClass.class.isAssignableFrom(type);
-		if (isGeneratedClass) {
-			ClassGeneratorUtil.registerConstructorContext(callstack, interpreter);
-		}
+	private Object constructObject( 
+		Class type, Object[] args, CallStack callstack ) 
+		throws EvalError
+	{
 		Object obj;
         try {
             obj = Reflect.constructObject( type, args );
         } catch ( ReflectError e) {
             throw new EvalError(
 				"Constructor error: " + e.getMessage(), this, callstack );
-        } catch (InvocationTargetException e) {
+        } catch(InvocationTargetException e) {
 			// No need to wrap this debug
-			Interpreter.debug("The constructor threw an exception:\n\t" + e.getTargetException());
-            throw new TargetError("Object constructor", e.getTargetException(), this, callstack, true);
-        } finally {
-			if (isGeneratedClass) {
-				ClassGeneratorUtil.registerConstructorContext(null, null); // clean up, prevent memory leak
-			}		
-		}
+			Interpreter.debug("The constructor threw an exception:\n\t" +
+				e.getTargetException());
+            throw new TargetError(
+				"Object constructor", e.getTargetException(), 
+				this, callstack, true);
+        }
 
 		String className = type.getName();
 		// Is it an inner class?
@@ -159,8 +156,12 @@ class BSHAllocationExpression extends SimpleNode
 			&& className.startsWith( instanceNameSpace.getName() +"$") 
 		)
 		{
-			ClassGenerator.getClassGenerator().setInstanceNameSpaceParent(
-				obj, className, instanceNameSpace );
+			try {
+				ClassGenerator.getClassGenerator().setInstanceNameSpaceParent(
+					obj, className, instanceNameSpace );
+			} catch ( UtilEvalError e ) {
+				throw e.toEvalError( this, callstack );
+			}
 		}
 
 		return obj;
@@ -174,17 +175,23 @@ class BSHAllocationExpression extends SimpleNode
 		String name = callstack.top().getName() + "$" + (++innerClassCount);
 		Modifiers modifiers = new Modifiers();
 		modifiers.addModifier( Modifiers.CLASS, "public" );
-		Class clas = ClassGenerator.getClassGenerator() .generateClass( 
+		Class clas;
+		try {
+			clas = ClassGenerator.getClassGenerator() .generateClass( 
 				name, modifiers, null/*interfaces*/, type/*superClass*/, 
 				block, false/*isInterface*/, callstack, interpreter );
+		} catch ( UtilEvalError e ) {
+			throw e.toEvalError( this, callstack );
+		}
 		try {
 			return Reflect.constructObject( clas, args );
 		} catch ( Exception e ) {
-			Throwable cause = e;
-			if ( e instanceof InvocationTargetException ) {
-				cause = ((InvocationTargetException) e).getTargetException();
-			}
-			throw new EvalError("Error constructing inner class instance: "+e, this, callstack, cause);
+			if ( e instanceof InvocationTargetException )
+				e = (Exception)((InvocationTargetException)e)
+					.getTargetException();
+			throw new EvalError(
+				"Error constructing inner class instance: "+e, this, callstack
+			);
 		}
 	}
 
@@ -201,7 +208,11 @@ class BSHAllocationExpression extends SimpleNode
 		// statical import fields from the interface so that code inside
 		// can refer to the fields directly (e.g. HEIGHT)
 		local.importStatic( type );
-		return local.getThis(interpreter).getInterface( type );
+		try {
+			return local.getThis(interpreter).getInterface( type );
+		} catch ( UtilEvalError e ) {
+			throw e.toEvalError( this, callstack );
+		}
 	}
 
     private Object objectArrayAllocation(

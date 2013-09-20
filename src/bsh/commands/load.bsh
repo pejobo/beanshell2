@@ -12,6 +12,8 @@ import java.lang.reflect.Proxy;
 
 import bsh.Capabilities;
 
+if ( Capabilities.classExists("bsh.ClassGeneratorImpl") )
+{
 public class BshObjectInputStream extends ObjectInputStream
 {
 	BshClassManager bcm;
@@ -60,6 +62,7 @@ public class BshObjectInputStream extends ObjectInputStream
 //        }
     }
 */
+}
 }
 
 Object load( String filename )

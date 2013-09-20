@@ -33,19 +33,12 @@
 
 package bsh;
 
+import java.net.*;
+import java.util.*;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.URL;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
 
 /**
 	BshClassManager manages all classloading in BeanShell.
@@ -86,6 +79,8 @@ import java.util.WeakHashMap;
 */
 public class BshClassManager
 {
+	/** Identifier for no value item.  Use a hashtable as a Set. */
+	private static Object NOVALUE = new Object(); 
 	/** 
 		The interpreter which created the class manager 
 		This is used to load scripted classes from source files.
@@ -102,34 +97,24 @@ public class BshClassManager
 		Note: these should probably be re-implemented with Soft references.
 		(as opposed to strong or Weak)
 	*/
-    protected transient Map<String,Class> absoluteClassCache = new Hashtable<String,Class>();
+    protected transient Hashtable absoluteClassCache = new Hashtable();
 	/**
 		Global cache for things we know are *not* classes.
 		Note: these should probably be re-implemented with Soft references.
 		(as opposed to strong or Weak)
 	*/
-    protected transient Set<String> absoluteNonClasses = Collections.synchronizedSet(new HashSet<String>());
+    protected transient Hashtable absoluteNonClasses = new Hashtable();
 
 	/**
 		Caches for resolved object and static methods.
 		We keep these maps separate to support fast lookup in the general case
 		where the method may be either.
 	*/
-	protected transient volatile Map<SignatureKey,Method> resolvedObjectMethods = new Hashtable<SignatureKey,Method>();
-	protected transient volatile Map<SignatureKey,Method> resolvedStaticMethods = new Hashtable<SignatureKey,Method>();
+	protected transient Hashtable resolvedObjectMethods = new Hashtable();
+	protected transient Hashtable resolvedStaticMethods = new Hashtable();
 
-	private transient Set<String> definingClasses = Collections.synchronizedSet(new HashSet<String>());
-	protected transient Map<String,String> definingClassesBaseNames = new Hashtable<String,String>();
-
-	private static final Map<BshClassManager,Object> classManagers = Collections.synchronizedMap(new WeakHashMap<BshClassManager,Object>());
-
-	static void clearResolveCache() {
-		BshClassManager[] managers = (BshClassManager[])classManagers.keySet().toArray(new BshClassManager[0]);
-		for( BshClassManager m : managers ) {
-			m.resolvedObjectMethods = new Hashtable<SignatureKey,Method>();
-			m.resolvedStaticMethods = new Hashtable<SignatureKey,Method>();
-		}
-	}
+	protected transient Hashtable definingClasses = new Hashtable();
+	protected transient Hashtable definingClassesBaseNames = new Hashtable();
 
 	/**
 		Create a new instance of the class manager.  
@@ -142,23 +127,25 @@ public class BshClassManager
 	{
 		BshClassManager manager;
 
-		// Do we have the optional package?
-		if ( Capabilities.classExists("bsh.classpath.ClassManagerImpl") ) 
+		// Do we have the necessary jdk1.2 packages and optional package?
+		if ( Capabilities.classExists("java.lang.ref.WeakReference") 
+			&& Capabilities.classExists("java.util.HashMap") 
+			&& Capabilities.classExists("bsh.classpath.ClassManagerImpl") 
+		) 
 			try {
 				// Try to load the module
 				// don't refer to it directly here or we're dependent upon it
-				Class clazz = Class.forName( "bsh.classpath.ClassManagerImpl" );
-				manager = (BshClassManager) clazz.newInstance();
+				Class clas = Class.forName( "bsh.classpath.ClassManagerImpl" );
+				manager = (BshClassManager)clas.newInstance();
 			} catch ( Exception e ) {
-				throw new InterpreterError("Error loading classmanager", e);
+				throw new InterpreterError("Error loading classmanager: "+e);
 			}
-		else
+		else 
 			manager = new BshClassManager();
 
 		if ( interpreter == null )
 			interpreter = new Interpreter();
 		manager.declaringInterpreter = interpreter;
-		classManagers.put(manager,null);
 		return manager;
 	}
 
@@ -187,31 +174,31 @@ public class BshClassManager
 		} catch ( ClassNotFoundException e ) { /*ignore*/ }
 
 		// try scripted class
-		if ( clas == null && declaringInterpreter.getCompatibility() )
+		if ( clas == null ) 
 			clas = loadSourceClass( name );
 
 		return clas;
 	}
 	
 	// Move me to classpath/ClassManagerImpl???
-	protected Class<?> loadSourceClass( final String name ) {
-		final String fileName = '/' + name.replace('.', '/') + ".java";
-		final InputStream in = getResourceAsStream( fileName );
-		if ( in == null ) {
+	protected Class loadSourceClass( String name )
+	{
+		String fileName = "/"+name.replace('.','/')+".java";
+		InputStream in = getResourceAsStream( fileName );
+		if ( in == null )
 			return null;
-		}
+
 		try {
-			Interpreter.debug("Loading class from source file: " + fileName);
+			System.out.println("Loading class from source file: "+fileName);
 			declaringInterpreter.eval( new InputStreamReader(in) );
 		} catch ( EvalError e ) {
-			if (Interpreter.DEBUG) {
-				e.printStackTrace();
-			}
+			// ignore
+			System.err.println( e );
 		}
 		try {
 			return plainClassForName( name );
-		} catch ( final ClassNotFoundException e ) {
-			Interpreter.debug("Class not found in source file: " + name);
+		} catch ( ClassNotFoundException e ) {
+			System.err.println("Class not found in source file: "+name );
 			return null;
 		}
 	}
@@ -235,12 +222,27 @@ public class BshClassManager
 	{
 		Class c = null;
 
-		if ( externalClassLoader != null )
-			c = externalClassLoader.loadClass( name );
-		else
-			c = Class.forName( name );
+		try {
+			if ( externalClassLoader != null )
+				c = externalClassLoader.loadClass( name );
+			else
+				c = Class.forName( name );
 
-		cacheClassInfo( name, c );
+			cacheClassInfo( name, c );
+
+		/*
+			Original note: Jdk under Win is throwing these to
+			warn about lower case / upper case possible mismatch.
+			e.g. bsh.console bsh.Console
+	
+			Update: Prior to 1.3 we were squeltching NoClassDefFoundErrors 
+			which was very annoying.  I cannot reproduce the original problem 
+			and this was never a valid solution.  If there are legacy VMs that
+			have problems we can include a more specific test for them here.
+		*/
+		} catch ( NoClassDefFoundError e ) {
+			throw noClassDefFound( name, e );
+		}
 
 		return c;
 	}
@@ -291,7 +293,7 @@ public class BshClassManager
 		if ( value != null )
 			absoluteClassCache.put( name, value );
 		else
-			absoluteNonClasses.add( name );
+			absoluteNonClasses.put( name, NOVALUE );
 	}
 
 	/**
@@ -326,9 +328,9 @@ public class BshClassManager
 
 		// Try static and then object, if allowed
 		// Note that the Java compiler should not allow both.
-		Method method = resolvedStaticMethods.get( sk );
+		Method method = (Method)resolvedStaticMethods.get( sk );
 		if ( method == null && !onlyStatic)
-			method = resolvedObjectMethods.get( sk );
+			method = (Method)resolvedObjectMethods.get( sk );
 
 		if ( Interpreter.DEBUG )
 		{
@@ -348,10 +350,10 @@ public class BshClassManager
 	*/
 	protected void clearCaches() 
 	{
-		absoluteNonClasses = Collections.synchronizedSet(new HashSet<String>());
-		absoluteClassCache = new Hashtable<String,Class>();
-		resolvedObjectMethods = new Hashtable<SignatureKey,Method>();
-		resolvedStaticMethods = new Hashtable<SignatureKey,Method>();
+    	absoluteNonClasses = new Hashtable();
+    	absoluteClassCache = new Hashtable();
+    	resolvedObjectMethods = new Hashtable();
+    	resolvedStaticMethods = new Hashtable();
 	}
 
 	/**
@@ -487,19 +489,19 @@ public class BshClassManager
 		int i = baseName.indexOf("$");
 		if ( i != -1 )
 			baseName = baseName.substring(i+1);
-		String cur = definingClassesBaseNames.get( baseName );
+		String cur = (String)definingClassesBaseNames.get( baseName );
 		if ( cur != null )
 			throw new InterpreterError("Defining class problem: "+className 
 				+": BeanShell cannot yet simultaneously define two or more "
 				+"dependant classes of the same name.  Attempt to define: "
 				+ className +" while defining: "+cur 
 			);
-		definingClasses.add( className );
+		definingClasses.put( className, NOVALUE );
 		definingClassesBaseNames.put( baseName, className );
 	}
 
 	protected boolean isClassBeingDefined( String className ) {
-		return definingClasses.contains( className );
+		return definingClasses.get( className ) != null;
 	}
 
 	/**
@@ -508,7 +510,7 @@ public class BshClassManager
 	*/
 	protected String getClassBeingDefined( String className ) {
 		String baseName = Name.suffix(className,1);
-		return definingClassesBaseNames.get( baseName );
+		return (String)definingClassesBaseNames.get( baseName );
 	}
 
 	/**
@@ -557,6 +559,16 @@ public class BshClassManager
 	}
 
 	protected void classLoaderChanged() { }
+
+	/**
+		Annotate the NoClassDefFoundError with some info about the class
+		we were trying to load.
+	*/
+	protected static Error noClassDefFound( String className, Error e ) {
+		return new NoClassDefFoundError(
+			"A class required by class: "+className +" could not be loaded:\n"
+			+e.toString() );
+	}
 
 	protected static UtilEvalError cmUnavailable() {
 		return new Capabilities.Unavailable(

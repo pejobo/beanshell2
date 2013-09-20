@@ -33,9 +33,7 @@
 
 package bsh;
 
-import java.io.Serializable;
-import java.util.Stack;
-import java.util.EmptyStackException;
+import java.util.Vector;
 
 /**
 	A stack of NameSpaces representing the call path.
@@ -45,6 +43,10 @@ import java.util.EmptyStackException;
 
 	This is used to support the this.caller magic reference and to print
 	script "stack traces" when evaluation errors occur.
+	<p>
+
+	Note: it would be awefully nice to use the java.util.Stack here.
+	Sigh... have to stay 1.1 compatible.
 	<p>
 
 	Note: How can this be thread safe, you might ask?  Wouldn't a thread 
@@ -57,12 +59,9 @@ import java.util.EmptyStackException;
 	it exposes) creates a new CallStack for each external call.
 	<p>
 */
-public final class CallStack implements Serializable {
-
-	private static final long serialVersionUID = 0L;
-
-	private final Stack<NameSpace> stack = new Stack<NameSpace>();
-
+public class CallStack 
+{
+	private Vector stack = new Vector(2);
 
 	public CallStack() { }
 
@@ -75,22 +74,21 @@ public final class CallStack implements Serializable {
 	}
 
 	public void push( NameSpace ns ) {
-		stack.push( ns );
+		stack.insertElementAt( ns, 0 );
 	}
 
 	public NameSpace top() {
-		return stack.peek();
+		return get(0);
 	}
 
 	/**
 		zero based.
 	*/
 	public NameSpace get(int depth) {
-		int size = stack.size();
-		if ( depth >= size )
+		if ( depth >= depth() )
 			return NameSpace.JAVACODE;
 		else
-			return stack.get(size-1-depth);
+			return (NameSpace)(stack.elementAt(depth));
 	}
 	
 	/**
@@ -98,15 +96,15 @@ public final class CallStack implements Serializable {
 		zero based.
 	*/
 	public void set(int depth, NameSpace ns) {
-		stack.set( stack.size()-1-depth, ns );
+		stack.setElementAt(ns, depth );
 	}
 
 	public NameSpace pop() {
-		try {
-			return stack.pop();
-		} catch(EmptyStackException e) {
+		if ( depth() < 1 )
 			throw new InterpreterError("pop on empty CallStack");
-		}
+		NameSpace top = top();
+		stack.removeElementAt(0);
+		return top;
 	}
 
 	/**
@@ -114,27 +112,27 @@ public final class CallStack implements Serializable {
 		value.
 	*/
 	public NameSpace swap( NameSpace newTop ) {
-		int last = stack.size() - 1;
-		NameSpace oldTop = stack.get(last);
-		stack.set( last, newTop );
+		NameSpace oldTop = (NameSpace)(stack.elementAt(0));
+		stack.setElementAt( newTop, 0 );
 		return oldTop;
 	}
 
 	public int depth() {
 		return stack.size();
 	}
-/*
+
 	public NameSpace [] toArray() {
 		NameSpace [] nsa = new NameSpace [ depth() ];
 		stack.copyInto( nsa );
 		return nsa;
 	}
-*/
+
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		StringBuffer sb = new StringBuffer();
 		sb.append("CallStack:\n");
-		for( int i=stack.size()-1; i>=0; i-- )
-			sb.append("\t"+stack.get(i)+"\n");
+		NameSpace [] nsa = toArray();
+		for(int i=0; i<nsa.length; i++)
+			sb.append("\t"+nsa[i]+"\n");
 
 		return sb.toString();
 	}
@@ -145,7 +143,7 @@ public final class CallStack implements Serializable {
 	*/
 	public CallStack copy() {
 		CallStack cs = new CallStack();
-		cs.stack.addAll(this.stack);
+		cs.stack = (Vector)this.stack.clone();
 		return cs;
 	}
 }

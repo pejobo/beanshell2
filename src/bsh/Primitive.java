@@ -34,9 +34,7 @@
 
 package bsh;
 
-import java.io.ObjectStreamException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Hashtable;
 
 /**
     Wrapper for primitive types in Bsh.  This is package public because it 
@@ -72,7 +70,7 @@ public final class Primitive implements ParserConstants, java.io.Serializable
 		wrapperToPrimitive.put( Double.class, Double.TYPE );
 	}
 	*/
-	static final Map<Class,Class> wrapperMap = new HashMap<Class,Class>();
+	static Hashtable wrapperMap = new Hashtable();
 	static {
 		wrapperMap.put( Boolean.TYPE, Boolean.class );
 		wrapperMap.put( Byte.TYPE, Byte.class );
@@ -99,20 +97,8 @@ public final class Primitive implements ParserConstants, java.io.Serializable
     {
         private Special() { }
 
-        public static final Special NULL_VALUE = new Special()
-        {
-            private Object readResolve() throws ObjectStreamException
-            {
-                return Special.NULL_VALUE;
-            }
-        };
-        public static final Special VOID_TYPE = new Special()
-        {
-            private Object readResolve() throws ObjectStreamException
-            {
-                return Special.VOID_TYPE;
-            }
-        };
+        public static final Special NULL_VALUE = new Special();
+        public static final Special VOID_TYPE = new Special();
     }
 
     /*
@@ -127,22 +113,6 @@ public final class Primitive implements ParserConstants, java.io.Serializable
         reasons we'll consider the lack of a type to be a special value.
     */
     public static final Primitive VOID = new Primitive(Special.VOID_TYPE);
-    
-    private Object readResolve() throws ObjectStreamException
-    {
-        if (value == Special.NULL_VALUE)
-        {
-            return Primitive.NULL;
-        }
-        else if (value == Special.VOID_TYPE)
-        {
-            return Primitive.VOID;
-        }
-        else
-        {
-            return this;
-        }
-    }
 
     // private to prevent invocation with param that isn't a primitive-wrapper
     public Primitive( Object value )
@@ -298,16 +268,11 @@ public final class Primitive implements ParserConstants, java.io.Serializable
 
             case BOOL_OR:
             case BOOL_ORX:
-            case BIT_OR:
                 return new Boolean( lhs || rhs );
 
             case BOOL_AND:
             case BOOL_ANDX:
-            case BIT_AND:
                 return new Boolean( lhs && rhs );
-	    
-            case XOR:
-                return new Boolean( lhs ^ rhs );
 
             default:
                 throw new InterpreterError("unimplemented binary operator");
@@ -756,10 +721,6 @@ public final class Primitive implements ParserConstants, java.io.Serializable
                 return operand;
             case MINUS:
                 return -operand;
-            case INCR:
-                return operand + 1;
-            case DECR:
-                return operand - 1;
             default:
                 throw new InterpreterError("bad float unaryOperation");
         }
@@ -775,10 +736,6 @@ public final class Primitive implements ParserConstants, java.io.Serializable
                 return operand;
             case MINUS:
                 return -operand;
-            case INCR:
-                return operand + 1;
-            case DECR:
-                return operand - 1;
             default:
                 throw new InterpreterError("bad double unaryOperation");
         }
@@ -940,7 +897,7 @@ public final class Primitive implements ParserConstants, java.io.Serializable
 	*/
 	public static Class boxType( Class primitiveType )
 	{
-		Class c = wrapperMap.get( primitiveType );
+		Class c = (Class)wrapperMap.get( primitiveType );
 		if ( c != null )
 			return c;
 		throw new InterpreterError( 
@@ -954,7 +911,7 @@ public final class Primitive implements ParserConstants, java.io.Serializable
 	*/
 	public static Class unboxType( Class wrapperType )
 	{
-		Class c = wrapperMap.get( wrapperType );
+		Class c = (Class)wrapperMap.get( wrapperType );
 		if ( c != null )
 			return c;
 		throw new InterpreterError( 

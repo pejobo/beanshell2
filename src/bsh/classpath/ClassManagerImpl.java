@@ -146,7 +146,6 @@ public class ClassManagerImpl extends BshClassManager
 	/**
 		@return the class or null
 	*/
-	@Override
 	public Class classForName( String name )
 	{
 		// check positive cache
@@ -155,101 +154,84 @@ public class ClassManagerImpl extends BshClassManager
 			return c;
 
 		// check negative cache
-		if ( absoluteNonClasses.contains(name) ) {
-			if ( Interpreter.DEBUG ) Interpreter.debug("absoluteNonClass list hit: "+name);
+		if ( absoluteNonClasses.get(name)!=null ) {
+			if ( Interpreter.DEBUG )
+				Interpreter.debug("absoluteNonClass list hit: "+name);
 			return null;
 		}
 
-		if ( Interpreter.DEBUG ) Interpreter.debug("Trying to load class: "+name);
+		if ( Interpreter.DEBUG )
+			Interpreter.debug("Trying to load class: "+name);
 
 		// Check explicitly mapped (reloaded) class...
-		final ClassLoader overlayLoader = getLoaderForClass( name );
-		if ( overlayLoader != null ) {
+		ClassLoader overlayLoader = getLoaderForClass( name );
+		if ( overlayLoader != null )
+		{
 			try {
 				c = overlayLoader.loadClass(name);
 			} catch ( Exception e ) {
-				if ( Interpreter.DEBUG ) Interpreter.debug("overlay loader failed for '" + name + "' - " + e);
+			// used to squeltch this... changed for 1.3
+			// see BshClassManager
+			} catch ( NoClassDefFoundError e2 ) {
+				throw noClassDefFound( name, e2 );
 			}
+
 			// Should be there since it was explicitly mapped
-			// throw an error if c == null)?
+			// throw an error?
 		}
 
 		// insure that core classes are loaded from the same loader
-		if ((c == null) && name.startsWith(BSH_PACKAGE)) {
-			final ClassLoader myClassLoader = Interpreter.class.getClassLoader(); // is null if located in bootclasspath
-			if (myClassLoader != null) {
+		if ( c == null ) {
+			if ( name.startsWith( BSH_PACKAGE ) )
 				try {
-					c = myClassLoader.loadClass(name);
-				} catch (ClassNotFoundException e) {
-					// fall through
-				} catch (NoClassDefFoundError e) {
-					// fall through
-				}
-			} else {
-				try {
-					c = Class.forName( name );
-				} catch ( ClassNotFoundException e ) {
-					// fall through
-				} catch ( NoClassDefFoundError e ) {
-					// fall through
-				}
-			}
+					c = Interpreter.class.getClassLoader().loadClass( name );
+				} catch ( ClassNotFoundException e ) {}
 		}
 
 		// Check classpath extension / reloaded classes
-		if ((c == null) && (baseLoader != null)) {
-			try {
-				c = baseLoader.loadClass(name);
-			} catch (ClassNotFoundException e) {
-				// fall through
-			}
+		if ( c == null ) {
+			if ( baseLoader != null )
+				try {
+					c = baseLoader.loadClass( name );
+				} catch ( ClassNotFoundException e ) {}
 		}
 
 		// Optionally try external classloader
-		if ((c == null) && (externalClassLoader != null)) {
-			try {
-				c = externalClassLoader.loadClass(name);
-			} catch (ClassNotFoundException e) {
-				// fall through					
-			}
+		if ( c == null ) {
+			if ( externalClassLoader != null )
+				try {
+					c = externalClassLoader.loadClass( name );
+				} catch ( ClassNotFoundException e ) {}
 		}
 
 		// Optionally try context classloader
 		// Note that this might be a security violation
 		// is catching the SecurityException sufficient for all environments?
 		// or do we need a way to turn this off completely?
-		if ( c ==  null ) {
+		if ( c ==  null )
+		{
 			try {
-				final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-				if ( contextClassLoader != null ) {
+				ClassLoader contextClassLoader = 
+					Thread.currentThread().getContextClassLoader();
+				if ( contextClassLoader != null )
 					c = Class.forName( name, true, contextClassLoader );
-				}
-			} catch ( ClassNotFoundException e ) { 
-				// fall through
-			} catch ( NoClassDefFoundError e ) { 
-				// fall through
-			} catch ( SecurityException e ) { 
-				// fall through
-			} 
+			} catch ( ClassNotFoundException e ) { // fall through
+			} catch ( SecurityException e ) { } // fall through
 		}
 
 		// try plain class forName()
 		if ( c == null )
 			try {
-				c = Class.forName( name );
-			} catch ( ClassNotFoundException e ) {
-				// fall through
-/* I disagree with letting this fall through  -fschmidt
-			} catch ( NoClassDefFoundError e ) {
-				// fall through
-*/
-			}
+				c = plainClassForName( name );
+			} catch ( ClassNotFoundException e ) {}
 
 		// Try scripted class
 		if ( c == null )
 			c = loadSourceClass( name );
 
 		// Cache result (or null for not found)
+		// Note: plainClassForName already caches, so it will be redundant
+		// in that case, however this process only happens once
 		cacheClassInfo( name, c );
 
 		return c;
@@ -259,8 +241,7 @@ public class ClassManagerImpl extends BshClassManager
 		Get a resource URL using the BeanShell classpath
 		@param path should be an absolute path
 	*/
-	@Override
-	public URL getResource( String path )
+	public URL getResource( String path ) 
 	{
 		URL url = null;
 		if ( baseLoader != null )
@@ -275,8 +256,7 @@ public class ClassManagerImpl extends BshClassManager
 		Get a resource stream using the BeanShell classpath
 		@param path should be an absolute path
 	*/
-	@Override
-	public InputStream getResourceAsStream( String path )
+	public InputStream getResourceAsStream( String path ) 
 	{
 		InputStream in = null;
 		if ( baseLoader != null )
@@ -299,8 +279,7 @@ public class ClassManagerImpl extends BshClassManager
 
 	/**
 	*/
-	@Override
-	public void addClassPath( URL path )
+	public void addClassPath( URL path ) 
 		throws IOException 
 	{
 		if ( baseLoader == null )
@@ -317,7 +296,6 @@ public class ClassManagerImpl extends BshClassManager
 		Clear all classloading behavior and class caches and reset to 
 		initial state.
 	*/
-	@Override
 	public void reset()
 	{
 		baseClassPath = new BshClassPath("baseClassPath");
@@ -330,7 +308,6 @@ public class ClassManagerImpl extends BshClassManager
 		Set a new base classpath and create a new base classloader.
 		This means all types change. 
 	*/
-	@Override
 	public void setClassPath( URL [] cp ) {
 		baseClassPath.setPath( cp );
 		initBaseLoader();
@@ -344,8 +321,7 @@ public class ClassManagerImpl extends BshClassManager
 
 		No point in including the boot class path (can't reload thos).
 	*/
-	@Override
-	public void reloadAllClasses() throws ClassPathException
+	public void reloadAllClasses() throws ClassPathException 
 	{
 		BshClassPath bcp = new BshClassPath("temp");
 		bcp.addComponent( baseClassPath );
@@ -367,8 +343,7 @@ public class ClassManagerImpl extends BshClassManager
 		whenever we are asked for classes in the appropriate space.
 		For this we use a DiscreteFilesClassLoader
 	*/
-	@Override
-	public void reloadClasses( String [] classNames )
+	public void reloadClasses( String [] classNames ) 
 		throws ClassPathException
 	{
 		// validate that it is a class here?
@@ -427,8 +402,7 @@ public class ClassManagerImpl extends BshClassManager
 		The special package name "<unpackaged>" can be used to refer 
 		to unpackaged classes.
 	*/
-	@Override
-	public void reloadPackage( String pack )
+	public void reloadPackage( String pack ) 
 		throws ClassPathException 
 	{
 		Collection classes = 
@@ -481,8 +455,7 @@ public class ClassManagerImpl extends BshClassManager
 		Support for "import *;"
 		Hide details in here as opposed to NameSpace.
 	*/
-	@Override
-	public void doSuperImport()
+	public void doSuperImport() 
 		throws UtilEvalError
 	{
 		// Should we prevent it from happening twice?
@@ -502,21 +475,18 @@ public class ClassManagerImpl extends BshClassManager
 		superImport = true;
 	}
 
-	@Override
 	protected boolean hasSuperImport() { return superImport; }
 
 	/**
 		Return the name or null if none is found,
 		Throw an ClassPathException containing detail if name is ambigous.
 	*/
-	@Override
-	public String getClassNameByUnqName( String name )
+	public String getClassNameByUnqName( String name ) 
 		throws ClassPathException
 	{
 		return getClassPath().getClassNameByUnqName( name );
 	}
 
-	@Override
 	public void addListener( Listener l ) {
 		listeners.addElement( new WeakReference( l, refQueue) );
 
@@ -533,7 +503,6 @@ public class ClassManagerImpl extends BshClassManager
 		}
 	}
 
-	@Override
 	public void removeListener( Listener l ) {
 		throw new Error("unimplemented");
 	}
@@ -556,8 +525,7 @@ public class ClassManagerImpl extends BshClassManager
 
 		@exception ClassPathException can be thrown by reloadClasses
 	*/
-	@Override
-	public Class defineClass( String name, byte [] code )
+	public Class defineClass( String name, byte [] code ) 
 	{
 		baseClassPath.setClassSource( name, new GeneratedClassSource( code ) );
 		try {
@@ -575,8 +543,7 @@ public class ClassManagerImpl extends BshClassManager
 		The listener list is implemented with weak references so that we 
 		will not keep every namespace in existence forever.
 	*/
-	@Override
-	protected void classLoaderChanged()
+	protected void classLoaderChanged() 
 	{
 		// clear the static caches in BshClassManager
 		clearCaches();
@@ -595,8 +562,7 @@ public class ClassManagerImpl extends BshClassManager
 			listeners.removeElement( e.nextElement() );
 	}
 
-	@Override
-	public void dump( PrintWriter i )
+	public void dump( PrintWriter i ) 
 	{
 		i.println("Bsh Class Manager Dump: ");
 		i.println("----------------------- ");

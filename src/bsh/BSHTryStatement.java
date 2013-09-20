@@ -34,9 +34,7 @@
 
 package bsh;
 
-import java.util.List;
-import java.util.ArrayList;
-
+import java.util.Vector;
 
 class BSHTryStatement extends SimpleNode
 {
@@ -50,16 +48,16 @@ class BSHTryStatement extends SimpleNode
 	{
 		BSHBlock tryBlock = ((BSHBlock)jjtGetChild(0));
 
-		List<BSHFormalParameter> catchParams = new ArrayList<BSHFormalParameter>();
-		List<BSHBlock> catchBlocks = new ArrayList<BSHBlock>();
+		Vector catchParams = new Vector();
+		Vector catchBlocks = new Vector();
 
 		int nchild = jjtGetNumChildren();
 		Node node = null;
 		int i=1;
 		while((i < nchild) && ((node = jjtGetChild(i++)) instanceof BSHFormalParameter))
 		{
-			catchParams.add((BSHFormalParameter)node);
-			catchBlocks.add((BSHBlock)jjtGetChild(i++));
+			catchParams.addElement(node);
+			catchBlocks.addElement(jjtGetChild(i++));
 			node = null;
 		}
 		// finaly block
@@ -106,7 +104,8 @@ class BSHTryStatement extends SimpleNode
 			for(i=0; i<n; i++)
 			{
 				// Get catch block
-				BSHFormalParameter fp = catchParams.get(i);
+				BSHFormalParameter fp = 
+					(BSHFormalParameter)catchParams.elementAt(i);
 
 				// Should cache this subject to classloader change message
 				// Evaluation of the formal parameter simply resolves its
@@ -135,7 +134,7 @@ class BSHTryStatement extends SimpleNode
 					}
 
 				// Found match, execute catch block
-				BSHBlock cb = catchBlocks.get(i);
+				BSHBlock cb = (BSHBlock)(catchBlocks.elementAt(i));
 
 				// Prepare to execute the block.
 				// We must create a new BlockNameSpace to hold the catch
@@ -176,11 +175,8 @@ class BSHTryStatement extends SimpleNode
 		}
 
 		// evaluate finally block
-		if( finallyBlock != null ) {
-			Object result = finallyBlock.eval(callstack, interpreter);
-			if( result instanceof ReturnControl )
-				return result;
-		}
+		if(finallyBlock != null)
+			ret = finallyBlock.eval(callstack, interpreter);
 
 		// exception fell through, throw it upward...
 		if(target != null)

@@ -46,29 +46,25 @@ package bsh;
 */
 public class EvalError extends Exception 
 {
-	private SimpleNode node;
+	SimpleNode node;
 
 	// Note: no way to mutate the Throwable message, must maintain our own
-	private String message;
+	String message;
 
-	private final CallStack callstack;
-
-	public EvalError( String s, SimpleNode node, CallStack callstack, Throwable cause ) {
-		this(s,node,callstack);
-		initCause(cause);
-	}
+	CallStack callstack;
 
 	public EvalError( String s, SimpleNode node, CallStack callstack ) {
-		this.message = s;
+		setMessage(s);
 		this.node = node;
 		// freeze the callstack for the stack trace.
-		this.callstack = callstack==null ? null : callstack.copy();
+		if ( callstack != null )
+			this.callstack = callstack.copy();
 	}
 
 	/**
 		Print the error with line number and stack trace.
 	*/
-	public String getMessage() 
+	public String toString() 
 	{
 		String trace;
 		if ( node != null )
@@ -82,7 +78,7 @@ public class EvalError extends Exception
 		if ( callstack != null )
 			trace = trace +"\n" + getScriptStackTrace();
 
-		return getRawMessage() + trace;
+		return getMessage() + trace;
 	}
 
 	/**
@@ -152,12 +148,17 @@ public class EvalError extends Exception
 		return trace;
 	}
 
-	public String getRawMessage() { return message; }
+	/**
+		@see #toString() for a full display of the information
+	*/
+	public String getMessage() { return message; }
+
+	public void setMessage( String s ) { message = s; }
 
 	/**
 		Prepend the message if it is non-null.
 	*/
-	private void prependMessage( String s ) 
+	protected void prependMessage( String s ) 
 	{ 
 		if ( s == null )
 			return;

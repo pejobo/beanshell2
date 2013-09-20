@@ -48,11 +48,16 @@ import java.util.Hashtable;
 */
 public class Capabilities 
 {
-	private static volatile boolean accessibility = false;
+	private static boolean accessibility = false;
 
 	public static boolean haveSwing() {
 		// classExists caches info for us
 		return classExists( "javax.swing.JButton" );
+	}
+
+	public static boolean canGenerateInterfaces() {
+		// classExists caches info for us
+		return classExists( "java.lang.reflect.Proxy" );
 	}
 
 	/**
@@ -75,18 +80,22 @@ public class Capabilities
 		if ( b == false )
 		{
 			accessibility = false;
-		} else {
-
-			// test basic access
-			try {
-				String.class.getDeclaredMethods();
-			} catch ( SecurityException e ) {
-				throw new Unavailable("Accessibility unavailable: "+e);
-			}
-	
-			accessibility = true;
+			return;
 		}
-		BshClassManager.clearResolveCache();
+
+		if ( !classExists( "java.lang.reflect.AccessibleObject" )
+			|| !classExists("bsh.reflect.ReflectManagerImpl")  
+		)
+			throw new Unavailable( "Accessibility unavailable" );
+
+		// test basic access
+		try {
+			String.class.getDeclaredMethods();
+		} catch ( SecurityException e ) {
+			throw new Unavailable("Accessibility unavailable: "+e);
+		}
+
+		accessibility = true; 
 	}
 
 	private static Hashtable classes = new Hashtable();

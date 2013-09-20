@@ -186,7 +186,7 @@ class Name implements java.io.Serializable
 	}
 
 	/**
-		@see #toObject(CallStack, Interpreter)
+		@see toObject()
 		@param forceClass if true then resolution will only produce a class.
 		This is necessary to disambiguate in cases where the grammar knows
 		that we want a class; where in general the var path may be taken.
@@ -842,8 +842,7 @@ class Name implements java.io.Serializable
 
                 if (obj == Primitive.NULL)
                     throw new UtilTargetError( new NullPointerException( 
-						"Null Pointer in Method Invocation of " +methodName
-							+"() on variable: "+targetName) );
+						"Null Pointer in Method Invocation" ) );
 
                 // some other primitive
                 // should avoid calling methods on primitive, as we do

@@ -34,14 +34,10 @@
 
 package	bsh;
 
-import java.io.Serializable;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Collections;
+import java.util.*;
 
 import java.io.InputStream;
+import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 
@@ -59,16 +55,18 @@ import java.lang.reflect.Field;
 	an Interpreter instance.  Together they comprise a Bsh scripted object 
 	context.
 	<p>
+
+	Note: I'd really like to use collections here, but we have to keep this
+	compatible with JDK1.1 
 */
 /*
 	Thanks to Slava Pestov (of jEdit fame) for import caching enhancements.
 	Note: This class has gotten too big.  It should be broken down a bit.
 */
-// not at all thread-safe - fschmidt
-public class NameSpace implements Serializable, BshClassManager.Listener, NameSource, Cloneable {
-	
-	private static final long serialVersionUID = 5004976946651004751L;
-
+public class NameSpace 
+	implements java.io.Serializable, BshClassManager.Listener, 
+	NameSource
+{
 	public static final NameSpace JAVACODE = 
 		new NameSpace((BshClassManager)null, "Called from compiled Java code.");
 	static {
@@ -85,14 +83,14 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 	*/
 	private String nsName; 
     private NameSpace parent;
-    private Map<String,Variable> variables;
-    private Map<String,List<BshMethod>> methods;
+    private Hashtable variables;
+    private Hashtable methods;
 
-    protected Map<String,String> importedClasses;
-    private List<String> importedPackages;
-    private List<String> importedCommands;
-	private List<Object> importedObjects;
-	private List<Class> importedStatic;
+    protected Hashtable importedClasses;
+    private Vector importedPackages;
+    private Vector importedCommands;
+	private Vector importedObjects;
+	private Vector importedStatic;
 	private String packageName;
 
 	transient private BshClassManager classManager;
@@ -101,7 +99,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
     private This thisReference;
 
 	/** Name resolver objects */
-    private Map<String,Name> names;
+    private Hashtable names;
 
 	/** The node associated with the creation of this namespace.
 		This is used support getInvocationLine() and getInvocationText(). */
@@ -123,7 +121,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 	boolean isClass;
 	Class classStatic;	
 	Object classInstance;
-	
+
 	void setClassStatic( Class clas ) {
 		this.classStatic = clas;
 		importStatic( clas );
@@ -155,7 +153,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		are cached here (those which might be imported).  Qualified names are 
 		always absolute and are cached by BshClassManager.
 	*/
-    transient private Map<String,Class> classCache;
+    transient private Hashtable classCache;
 
 	// End instance data
 
@@ -300,7 +298,8 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		String name, Object value, boolean strictJava, boolean recurse ) 
 		throws UtilEvalError 
 	{
-		ensureVariables();
+		if ( variables == null )
+			variables =	new Hashtable();
 
 		// primitives should have been wrapped
 		if ( value == null )
@@ -339,11 +338,6 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
     	}
 	}
 
-	private void ensureVariables() {
-		if ( variables == null )
-			variables =	new HashMap<String,Variable>();
-	}
-
 	/**
 		Remove the variable from the namespace.
 	*/
@@ -364,7 +358,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		if ( variables == null )
 			return new String [0];
 		else
-			return variables.keySet().toArray(new String[0]);
+			return enumerationToStringArray( variables.keys() );
 	}
 
 	/**
@@ -376,7 +370,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		if ( methods == null )
 			return new String [0];
 		else
-			return methods.keySet().toArray(new String[0]);
+			return enumerationToStringArray( methods.keys() );
 	}
 
 	/**
@@ -386,16 +380,41 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 	*/
 	public BshMethod [] getMethods() 
 	{
-		if ( methods == null ) {
+		if ( methods == null )
 			return new BshMethod [0];
-		} else {
-			List<BshMethod> ret = new ArrayList<BshMethod>();
-			for( List<BshMethod> list : methods.values() ) {
-				ret.addAll(list);
-			}
-			return ret.toArray(new BshMethod[0]);
-		}
+		else
+			return flattenMethodCollection( methods.elements() );
 	}
+
+	private String [] enumerationToStringArray( Enumeration e ) {
+		Vector v = new Vector();
+		while ( e.hasMoreElements() )
+			v.addElement( e.nextElement() );
+		String [] sa = new String [ v.size() ];
+		v.copyInto( sa );
+		return sa;
+	}
+
+	/**
+		Flatten the vectors of overloaded methods to a single array.
+		@see #getMethods()
+	*/
+    private BshMethod [] flattenMethodCollection( Enumeration e ) {
+        Vector v = new Vector();
+        while ( e.hasMoreElements() ) {
+            Object o = e.nextElement();
+            if ( o instanceof BshMethod )
+                v.addElement( o );
+            else {
+                Vector ov = (Vector)o;
+                for(int i=0; i<ov.size(); i++)
+                    v.addElement( ov.elementAt( i ) );
+            }
+        }
+        BshMethod [] bma = new BshMethod [ v.size() ];
+        v.copyInto( bma );
+        return bma;
+    }
 
 	/**
 		Get the parent namespace.
@@ -461,7 +480,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		over child interpreters and going to the parent for the declaring 
 		interpreter, so we'd be sure to get the top interpreter.
 	*/
-    public This getThis( Interpreter declaringInterpreter ) 
+    This getThis( Interpreter declaringInterpreter ) 
 	{
 		if ( thisReference == null )
 			thisReference = This.getThis( this, declaringInterpreter );
@@ -476,6 +495,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		if ( parent != null && parent != JAVACODE )
 			return parent.getClassManager();
 
+System.out.println("experiment: creating class manager");
 		classManager = BshClassManager.createClassManager( null/*interp*/ );
 		
 		//Interpreter.debug("No class manager namespace:" +this);
@@ -588,7 +608,11 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 	{
 		if ( variables == null )
 			return new Variable[0];
-		return variables.values().toArray(new Variable[0]);
+		Variable [] vars = new Variable [ variables.size() ];
+		int i=0;
+		for( Enumeration e = variables.elements(); e.hasMoreElements(); )
+			vars[i++] = (Variable)e.nextElement();
+		return vars;
 	}
 
 	/**
@@ -640,7 +664,8 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 	{
 		//checkVariableModifiers( name, modifiers );
 
-		ensureVariables();
+		if ( variables == null )
+			variables =	new Hashtable();
 
 		// Setting a typed variable is always a local operation.
 		Variable existing = getVariableImpl( name, false/*recurse*/ );
@@ -700,27 +725,26 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		@see Interpreter#source( String )
 		@see Interpreter#eval( String )
 	*/
-    public void	setMethod( BshMethod method )
+    public void	setMethod( String name, BshMethod method )
 		throws UtilEvalError
 	{
 		//checkMethodModifiers( method );
 
 		if ( methods == null )
-			methods = new HashMap<String,List<BshMethod>>();
+			methods = new Hashtable();
 
-		String name = method.getName();
-		List<BshMethod> list = methods.get(name);
+		Object m = methods.get(name);
 
-		if ( list == null ) {
-			methods.put(name, Collections.singletonList(method));
-		} else {
-			if( !(list instanceof ArrayList) ) {
-				list = new ArrayList<BshMethod>(list);
-				methods.put( name, list );
-			}
-			list.remove(method);
-			list.add( method );
-		}
+		if ( m == null )
+			methods.put(name, method);
+		else 
+		if ( m instanceof BshMethod ) {
+			Vector v = new Vector();
+			v.addElement( m );
+			v.addElement( method );
+			methods.put( name, v );
+		} else // Vector
+			((Vector)m).addElement( method );
     }
 
 	/**
@@ -757,21 +781,33 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		if ( method == null && isClass && !declaredOnly )
 			method = getImportedMethod( name, sig );
 
+		Object m = null;
 		if ( method == null && methods != null )
 		{
-			List<BshMethod> list = methods.get(name);
+			m = methods.get(name);
 
-			if ( list != null ) 
+			// m contains either BshMethod or Vector of BshMethod
+			if ( m != null ) 
 			{
+				// unwrap 
+				BshMethod [] ma;
+				if ( m instanceof Vector ) 
+				{
+					Vector vm = (Vector)m;
+					ma = new BshMethod[ vm.size() ];
+					vm.copyInto( ma );
+				} else
+					ma = new BshMethod[] { (BshMethod)m };
+
 				// Apply most specific signature matching
-				Class [][] candidates = new Class[ list.size() ][];
-				for( int i=0; i< candidates.length; i++ )
-					candidates[i] = list.get(i).getParameterTypes();
+				Class [][] candidates = new Class[ ma.length ][];
+				for( int i=0; i< ma.length; i++ )
+					candidates[i] = ma[i].getParameterTypes();
 
 				int match = 
 					Reflect.findMostSpecificSignature( sig, candidates );
 				if ( match != -1 )
-					method = list.get(match);
+					method = ma[match];
 			}
 		}
 
@@ -792,7 +828,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
     public void	importClass(String name)
     {
 		if ( importedClasses == null )
-			importedClasses = new HashMap<String,String>();
+			importedClasses = new Hashtable();
 
 		importedClasses.put( Name.suffix(name, 1), name );
 		nameSpaceChanged();
@@ -804,12 +840,13 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
     public void	importPackage(String name)
     {
 		if(importedPackages == null)
-			importedPackages = new ArrayList<String>();
+			importedPackages = new Vector();
 
 		// If it exists, remove it and add it at the end (avoid memory leak)
-		importedPackages.remove( name );
+		if ( importedPackages.contains( name ) )
+			importedPackages.remove( name );
 
-		importedPackages.add(name);
+		importedPackages.addElement(name);
 		nameSpaceChanged();
     }
 
@@ -823,7 +860,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
     public void	importCommands( String name )
     {
 		if ( importedCommands == null )
-			importedCommands = new ArrayList<String>();
+			importedCommands = new Vector();
 
 		// dots to slashes
 		name = name.replace('.','/');
@@ -835,9 +872,10 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 			name = name.substring( 0, name.length()-1 );
 
 		// If it exists, remove it and add it at the end (avoid memory leak)
-		importedCommands.remove( name );
+		if ( importedCommands.contains( name ) )
+			importedCommands.remove( name );
 
-		importedCommands.add(name);
+		importedCommands.addElement(name);
 		nameSpaceChanged();
     }
 
@@ -880,7 +918,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 			// loop backwards for precedence
 			for(int i=importedCommands.size()-1; i>=0; i--)
 			{
-				String path = importedCommands.get(i);
+				String path = (String)importedCommands.elementAt(i);
 
 				String scriptPath; 
 				if ( path.equals("/") )
@@ -923,7 +961,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		if ( importedObjects != null )
 		for(int i=0; i<importedObjects.size(); i++)
 		{
-			Object object = importedObjects.get(i);
+			Object object = importedObjects.elementAt(i);
 			Class clas = object.getClass();
 			Method method = Reflect.resolveJavaMethod( 
 				getClassManager(), clas, name, sig, false/*onlyStatic*/ );
@@ -935,7 +973,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		if ( importedStatic!= null )
 		for(int i=0; i<importedStatic.size(); i++)
 		{
-			Class clas = importedStatic.get(i);
+			Class clas = (Class)importedStatic.elementAt(i);
 			Method method = Reflect.resolveJavaMethod( 
 				getClassManager(), clas, name, sig, true/*onlyStatic*/ );
 			if ( method != null )
@@ -952,7 +990,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		if ( importedObjects != null )
 		for(int i=0; i<importedObjects.size(); i++)
 		{
-			Object object = importedObjects.get(i);
+			Object object = importedObjects.elementAt(i);
 			Class clas = object.getClass();
 			Field field = Reflect.resolveJavaField( 
 				clas, name, false/*onlyStatic*/ );
@@ -965,7 +1003,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		if ( importedStatic!= null )
 		for(int i=0; i<importedStatic.size(); i++)
 		{
-			Class clas = importedStatic.get(i);
+			Class clas = (Class)importedStatic.elementAt(i);
 			Field field = Reflect.resolveJavaField( 
 				clas, name, true/*onlyStatic*/ );
 			if ( field != null )
@@ -1001,7 +1039,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		*/
 			Interpreter.debug( e.toString() );
 			throw new UtilEvalError( 
-				"Error loading script: "+ e.getMessage(), e);
+				"Error loading script: "+ e.getMessage());
 		}
 
 		// Look for the loaded command 
@@ -1020,7 +1058,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 	*/
 	void cacheClass( String name, Class c ) {
 		if ( classCache == null ) {
-			classCache = new HashMap<String,Class>();
+			classCache = new Hashtable();
 			//cacheCount++; // debug
 		}
 
@@ -1072,7 +1110,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 
 		// Check the cache
 		if (classCache != null) {
-			c =	classCache.get(name);
+			c =	(Class)classCache.get(name);
 
 			if ( c != null )
 				return c;
@@ -1121,7 +1159,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		// Try explicitly imported class, e.g. import foo.Bar;
 		String fullname = null;
 		if ( importedClasses != null )
-			fullname = importedClasses.get(name);
+			fullname = (String)importedClasses.get(name);
 		
 		// not sure if we should really recurse here for explicitly imported
 		// class in parent...  
@@ -1132,30 +1170,31 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 				Found the full name in imported classes.
 			*/
 			// Try to make the full imported name
-			Class clas = classForName(fullname);
+			Class clas=classForName(fullname);
 			
-			if ( clas != null )
-				return clas;
-
 			// Handle imported inner class case
-			// Imported full name wasn't found as an absolute class
-			// If it is compound, try to resolve to an inner class.  
-			// (maybe this should happen in the BshClassManager?)
+			if ( clas == null ) 
+			{
+				// Imported full name wasn't found as an absolute class
+				// If it is compound, try to resolve to an inner class.  
+				// (maybe this should happen in the BshClassManager?)
 
-			if ( Name.isCompound( fullname ) )
-				try {
-					clas = getNameResolver( fullname ).toClass();
-				} catch ( ClassNotFoundException e ) { /* not a class */ }
-			else 
-				if ( Interpreter.DEBUG ) Interpreter.debug(
-					"imported unpackaged name not found:" +fullname);
+				if ( Name.isCompound( fullname ) )
+					try {
+						clas = getNameResolver( fullname ).toClass();
+					} catch ( ClassNotFoundException e ) { /* not a class */ }
+				else 
+					if ( Interpreter.DEBUG ) Interpreter.debug(
+						"imported unpackaged name not found:" +fullname);
 
-			// If found cache the full name in the BshClassManager
-			if ( clas != null ) {
-				// (should we cache info in not a class case too?)
-				getClassManager().cacheClassInfo( fullname, clas );
+				// If found cache the full name in the BshClassManager
+				if ( clas != null ) {
+					// (should we cache info in not a class case too?)
+					getClassManager().cacheClassInfo( fullname, clas );
+					return clas;
+				}
+			} else
 				return clas;
-			}
 
 			// It was explicitly imported, but we don't know what it is.
 			// should we throw an error here??
@@ -1170,7 +1209,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		if ( importedPackages != null )
 			for(int i=importedPackages.size()-1; i>=0; i--)
 			{
-				String s = importedPackages.get(i) + "." + name;
+				String s = ((String)importedPackages.elementAt(i)) + "." + name;
 				Class c=classForName(s);
 				if ( c != null )
 					return c;
@@ -1205,32 +1244,39 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 	*/
 	public String [] getAllNames() 
 	{
-		List<String> list = new ArrayList<String>();
-		getAllNamesAux( list );
-		return list.toArray(new String[0]);
+		Vector vec = new Vector();
+		getAllNamesAux( vec );
+		String [] names = new String [ vec.size() ];
+		vec.copyInto( names );
+		return names;
 	}
 
 	/**
 		Helper for implementing NameSource
 	*/
-	protected void getAllNamesAux( List<String> list ) 
+	protected void getAllNamesAux( Vector vec ) 
 	{
-		list.addAll( variables.keySet() );
-		if ( methods != null )
-			list.addAll( methods.keySet() );
+		Enumeration varNames = variables.keys();
+		while( varNames.hasMoreElements() )
+			vec.addElement( varNames.nextElement() );
+
+		Enumeration methodNames = methods.keys();
+		while( methodNames.hasMoreElements() )
+			vec.addElement( methodNames.nextElement() );
+
 		if ( parent != null )
-			parent.getAllNamesAux( list );
+			parent.getAllNamesAux( vec );
 	}
 
-	List<NameSource.Listener> nameSourceListeners;
+	Vector nameSourceListeners;
 	/**
 		Implements NameSource
 		Add a listener who is notified upon changes to names in this space.
 	*/
 	public void addNameSourceListener( NameSource.Listener listener ) {
 		if ( nameSourceListeners == null )
-			nameSourceListeners = new ArrayList<NameSource.Listener>();
-		nameSourceListeners.add( listener );
+			nameSourceListeners = new Vector();
+		nameSourceListeners.addElement( listener );
 	}
 	
 	/**
@@ -1378,9 +1424,9 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 	Name getNameResolver( String ambigname ) 
 	{
 		if ( names == null )
-			names = new HashMap<String,Name>();
+			names = new Hashtable();
 
-		Name name = names.get( ambigname );
+		Name name = (Name)names.get( ambigname );
 
 		if ( name == null ) {
 			name = new Name( this, ambigname );
@@ -1455,12 +1501,13 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 	public void importObject( Object obj ) 
 	{
 		if ( importedObjects == null )
-			importedObjects = new ArrayList<Object>();
+			importedObjects = new Vector();
 
 		// If it exists, remove it and add it at the end (avoid memory leak)
-		importedObjects.remove( obj );
+		if ( importedObjects.contains( obj ) )
+			importedObjects.remove( obj );
 
-		importedObjects.add( obj );
+		importedObjects.addElement( obj );
 		nameSpaceChanged();
 
 	}
@@ -1470,12 +1517,13 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 	public void importStatic( Class clas ) 
 	{
 		if ( importedStatic == null )
-			importedStatic = new ArrayList<Class>();
+			importedStatic = new Vector();
 
 		// If it exists, remove it and add it at the end (avoid memory leak)
-		importedStatic.remove( clas );
+		if ( importedStatic.contains( clas ) )
+			importedStatic.remove( clas );
 
-		importedStatic.add( clas );
+		importedStatic.addElement( clas );
 		nameSpaceChanged();
 	}
 
@@ -1498,40 +1546,5 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		
 		return null;
 	}
-
-
-	NameSpace copy() {
-		try {
-			final NameSpace clone = (NameSpace) clone();
-			clone.thisReference = null;
-			clone.variables = clone(variables);
-			clone.methods = clone(methods);
-			clone.importedClasses = clone(importedClasses);
-			clone.importedPackages = clone(importedPackages);
-			clone.importedCommands = clone(importedCommands);
-			clone.importedObjects = clone(importedObjects);
-			clone.importedStatic = clone(importedStatic);
-			clone.names = clone(names);
-			return clone;
-		} catch (CloneNotSupportedException e) {
-			throw new IllegalStateException(e);
-		}
-	}
-
-
-	private <K,V> Map<K,V> clone(final Map<K,V> map) {
-		if (map == null) {
-			return null;
-		}
-		return new HashMap<K,V>(map);
-	}
-
-
-	private <T> List<T> clone(final List<T> list) {
-		if (list == null) {
-			return null;
-		}
-		return new ArrayList<T>(list);
-	}
-
 }
+

@@ -186,67 +186,13 @@ public class Parser
 		The auto-generated Parser.generateParseException() method does not
 		provide line number info, therefore we do this.
 	*/
-	ParseException createParseException( String message, Exception e )
+	ParseException createParseException( String message )
 	{
 		Token errortok = token;
 		int line = errortok.beginLine, column = errortok.beginColumn;
 		String mess = (errortok.kind == 0) ? tokenImage[0] : errortok.image;
 		return new ParseException( "Parse error at line " + line 
-			+ ", column " + column + " : " + message, e );
-	}
-
-	int parseInt(String s) throws NumberFormatException {
-		int radix;
-		int i;
-		if( s.startsWith("0x") || s.startsWith("0X") ) {
-			radix = 16;
-			i = 2;
-		} else if( s.startsWith("0") && s.length() > 1 ) {
-			radix = 8;
-			i = 1;
-		} else {
-			radix = 10;
-			i = 0;
-		}
-		int result = 0;
-		int len = s.length();
-		for( ; i<len; i++ ) {
-			if( result < 0 )
-				throw new NumberFormatException("Number too big for integer type: "+s);
-			result *= radix;
-			int digit = Character.digit(s.charAt(i),radix);
-			if( digit < 0 )
-				throw new NumberFormatException("Invalid integer type: "+s);
-			result += digit;
-		}
-		return result;
-	}
-
-	long parseLong(String s) throws NumberFormatException {
-		int radix;
-		int i;
-		if( s.startsWith("0x") || s.startsWith("0X") ) {
-			radix = 16;
-			i = 2;
-		} else if( s.startsWith("0") && s.length() > 1 ) {
-			radix = 8;
-			i = 1;
-		} else {
-			radix = 10;
-			i = 0;
-		}
-		long result = 0;
-		int len = s.length();
-		for( ; i<len; i++ ) {
-			if( result < 0L )
-				throw new NumberFormatException("Number too big for long type: "+s);
-			result *= radix;
-			int digit = Character.digit(s.charAt(i),radix);
-			if( digit < 0 )
-				throw new NumberFormatException("Invalid long type: "+s);
-			result += digit;
-		}
-		return result;
+			+ ", column " + column + " : " + message );
 	}
 }
 
@@ -377,12 +323,6 @@ TOKEN : /* LITERALS */
           )
       )*
       "\""
-  >
-|
-  < LONG_STRING_LITERAL:
-      "\"\"\""
-      ( ~["\""] ("\"")? ("\"")? )*
-      "\"\"\""
   >
 |
    < FORMAL_COMMENT: 
@@ -547,7 +487,7 @@ Modifiers Modifiers( int context, boolean lookahead ) :
 				if ( mods == null ) mods = new Modifiers(); 
 				mods.addModifier( context, getToken(0).image );
 			} catch ( IllegalStateException e ) { 
-				throw createParseException( e.getMessage(), e );
+				throw createParseException( e.getMessage() );
 			}
 	}
   )* {
@@ -670,7 +610,7 @@ void FormalParameter() #FormalParameter :
 { Token t; }
 {
   // added [] to Type for bsh.  Removed [ final ] - is that legal?
-  LOOKAHEAD(2) Type() [ TypeArguments() ] t=<IDENTIFIER> { jjtThis.name = t.image; }
+  LOOKAHEAD(2) Type() t=<IDENTIFIER> { jjtThis.name = t.image; }
 |
   t=<IDENTIFIER> { jjtThis.name = t.image; }
 }
@@ -699,7 +639,7 @@ void ReturnType() #ReturnType :
 {
   "void" { jjtThis.isVoid = true; }
 |
-  Type() [ TypeArguments() ]
+  Type()
 }
 
 void PrimitiveType() #PrimitiveType :
@@ -721,11 +661,11 @@ void AmbiguousName() #AmbiguousName :
 */
 {
     Token t;
-    StringBuilder s;
+    StringBuffer s;
 }
 {
   t = <IDENTIFIER> { 
-  	s = new StringBuilder(t.image); 
+  	s = new StringBuffer(t.image); 
   }
   ( LOOKAHEAD(2) "." t = <IDENTIFIER> { s.append("."+t.image); } )* { 
   	jjtThis.text = s.toString(); 
@@ -1029,17 +969,18 @@ void Literal() #Literal :
     if(ch == 'l' || ch == 'L')
     {
         literal = literal.substring(0,literal.length()-1);
-		try {
-        	jjtThis.value = new Primitive( parseLong(literal) );
-		} catch ( NumberFormatException e ) {
-			throw createParseException( e.getMessage(), e );
-		}
+
+        // This really should be Long.decode, but there isn't one. As a result,
+        // hex and octal literals ending in 'l' or 'L' don't work.
+        jjtThis.value = new Primitive( new Long( literal ).longValue() );
     }
     else
 		try {
-        	jjtThis.value = new Primitive( parseInt(literal) );
+        	jjtThis.value = new Primitive( 
+				Integer.decode( literal ).intValue() );
 		} catch ( NumberFormatException e ) {
-			throw createParseException( e.getMessage(), e );
+			throw createParseException(
+				"Error or number too big for integer type: "+ literal );
 		}
   }
 |
@@ -1065,7 +1006,7 @@ void Literal() #Literal :
 		try {
     		jjtThis.charSetup( x.image.substring(1, x.image.length() - 1) );
 		} catch ( Exception e ) {
-			throw createParseException("Error parsing character: "+x.image, e);
+			throw createParseException("Error parsing character: "+x.image);
 		}
     }
 |
@@ -1073,15 +1014,7 @@ void Literal() #Literal :
 		try {
 			jjtThis.stringSetup( x.image.substring(1, x.image.length() - 1) );
 		} catch ( Exception e ) {
-			throw createParseException("Error parsing string: "+x.image, e);
-		}
-    }
-|
-  x = <LONG_STRING_LITERAL> {
-		try {
-			jjtThis.value = x.image.substring(3, x.image.length() - 3);
-		} catch ( Exception e ) {
-			throw createParseException("Error parsing long string: "+x.image, e);
+			throw createParseException("Error parsing string: "+x.image);
 		}
     }
 |
@@ -1130,19 +1063,13 @@ void ArgumentList() :
   ( "," Expression() )*
 }
 
-void TypeArguments() :
-{ }
-{
-	"<" <IDENTIFIER> ">"
-}
-
 void AllocationExpression() #AllocationExpression :
 { }
 {
   LOOKAHEAD(2)
   "new" PrimitiveType() ArrayDimensions()
 |
-  "new" AmbiguousName() [ TypeArguments() ]
+  "new" AmbiguousName() 
 	( 
 		ArrayDimensions() 
 	| 
@@ -1235,7 +1162,7 @@ void BlockStatement() :
   	MethodDeclaration()
 |
   // SYNTACTIC_LOOKAHEAD
-  LOOKAHEAD( Modifiers( Modifiers.FIELD, true ) Type() [ TypeArguments() ] <IDENTIFIER> )
+  LOOKAHEAD( Modifiers( Modifiers.FIELD, true ) Type() <IDENTIFIER> )
   TypedVariableDeclaration() ";"
 |
   Statement()
@@ -1386,7 +1313,7 @@ void TypedVariableDeclaration() #TypedVariableDeclaration :
 }
 {
 	mods = Modifiers( Modifiers.FIELD, false )
-  	Type() [ TypeArguments() ] VariableDeclarator() ( "," VariableDeclarator() )*  
+  	Type() VariableDeclarator() ( "," VariableDeclarator() )*  
 	{
         jjtThis.modifiers = mods;
     }

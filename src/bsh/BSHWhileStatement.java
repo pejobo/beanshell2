@@ -31,64 +31,68 @@
  *                                                                           *
  *****************************************************************************/
 
+
 package bsh;
 
 /**
- * This class handles both {@code while} statements and {@code do..while} statements.
+	This class handles both while(){} statements and do{}while() statements.
 */
-class BSHWhileStatement extends SimpleNode implements ParserConstants {
+class BSHWhileStatement extends SimpleNode implements ParserConstants
+{
+	public boolean isDoStatement;
 
-	/**
-	 * Set by Parser, default {@code false}
-	 */
-	boolean isDoStatement;
+    BSHWhileStatement(int id) { super(id); }
 
-    BSHWhileStatement(int id) {
-		super(id);
-	}
-
-
-    public Object eval( CallStack callstack, Interpreter interpreter) throws EvalError {
+    public Object eval( CallStack callstack, Interpreter interpreter)  
+		throws EvalError
+    {
 		int numChild = jjtGetNumChildren();
 
 		// Order of body and condition is swapped for do / while
-        final SimpleNode condExp;
-		final SimpleNode body;
+        SimpleNode condExp, body = null;
 
 		if ( isDoStatement ) {
-			condExp = (SimpleNode) jjtGetChild(1);
-			body = (SimpleNode) jjtGetChild(0);
+			condExp = (SimpleNode)jjtGetChild(1);
+			body =(SimpleNode)jjtGetChild(0);
 		} else {
-			condExp = (SimpleNode) jjtGetChild(0);
-			if ( numChild > 1 )	{
-				body = (SimpleNode) jjtGetChild(1);
-			} else {
-				body = null;
-			}
+			condExp = (SimpleNode)jjtGetChild(0);
+			if ( numChild > 1 )	// has body, else just for side effects
+				body =(SimpleNode)jjtGetChild(1);
 		}
 
 		boolean doOnceFlag = isDoStatement;
-
-        while (doOnceFlag || BSHIfStatement.evaluateCondition(condExp, callstack, interpreter)) {
-			doOnceFlag = false;
-			// no body?
-			if ( body == null ) {
+        while( 
+			doOnceFlag || 
+			BSHIfStatement.evaluateCondition(condExp, callstack, interpreter )
+		)
+		{
+			if ( body == null ) // no body?
 				continue;
-			}
+
 			Object ret = body.eval(callstack, interpreter);
-			if (ret instanceof ReturnControl) {
-				switch(( (ReturnControl)ret).kind ) {
+
+			boolean breakout = false;
+			if(ret instanceof ReturnControl)
+			{
+				switch(((ReturnControl)ret).kind )
+				{
 					case RETURN:
 						return ret;
 
 					case CONTINUE:
-						break;
+						continue;
 
 					case BREAK:
-						return Primitive.VOID;
+						breakout = true;
+						break;
 				}
 			}
+			if(breakout)
+				break;
+
+			doOnceFlag = false;
 		}
+
         return Primitive.VOID;
     }
 

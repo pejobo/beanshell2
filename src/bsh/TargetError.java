@@ -49,15 +49,17 @@ import java.io.PrintStream;
 	from the eval() or interpreter.eval() method it may be caught and unwrapped
 	to determine what exception was thrown.
 */
-public final class TargetError extends EvalError 
+public class TargetError extends EvalError 
 {
-	private final boolean inNativeCode;
+	Throwable target;
+	boolean inNativeCode;
 
 	public TargetError(
 		String msg, Throwable t, SimpleNode node, CallStack callstack, 
 		boolean inNativeCode )
 	{
-		super( msg, node, callstack, t );
+		super( msg, node, callstack );
+		target = t;
 		this.inNativeCode = inNativeCode;
 	}
 
@@ -69,18 +71,25 @@ public final class TargetError extends EvalError
 	public Throwable getTarget()
 	{
 		// check for easy mistake
-		Throwable target = getCause();
 		if(target instanceof InvocationTargetException)
 			return((InvocationTargetException)target).getTargetException();
 		else
 			return target;
 	}
 
-	public String getMessage() 
+	public String toString() 
 	{
-		return super.getMessage() 
+		return super.toString() 
 			+ "\nTarget exception: " + 
-			printTargetError( getCause() );
+			printTargetError( target );
+	}
+
+    public void printStackTrace() { 
+		printStackTrace( false, System.err );
+	}
+
+    public void printStackTrace( PrintStream out ) { 
+		printStackTrace( false, out );
 	}
 
     public void printStackTrace( boolean debug, PrintStream out ) {
@@ -88,7 +97,7 @@ public final class TargetError extends EvalError
 			super.printStackTrace( out );
 			out.println("--- Target Stack Trace ---");
 		}
-		getCause().printStackTrace( out );
+		target.printStackTrace( out );
 	}
 
 	/**
@@ -96,9 +105,14 @@ public final class TargetError extends EvalError
 		If the proxy mechanism is available, allow the extended print to
 		check for UndeclaredThrowableException and print that embedded error.
 	*/
-	private String printTargetError( Throwable t ) 
+	public String printTargetError( Throwable t ) 
 	{
-		return getCause().toString() + "\n" + xPrintTargetError( t );
+		String s = target.toString();
+
+		if ( Capabilities.canGenerateInterfaces() )
+			s += "\n" + xPrintTargetError( t );
+
+		return s;
 	}
 
 	/**
@@ -110,7 +124,7 @@ public final class TargetError extends EvalError
 		This is acceptable here because we're not in a critical path...
 		Otherwise we'd need yet another dynamically loaded module just for this.
 	*/
-	private String xPrintTargetError( Throwable t ) 
+	public String xPrintTargetError( Throwable t ) 
 	{
 		String getTarget =
 			"import java.lang.reflect.UndeclaredThrowableException;"+

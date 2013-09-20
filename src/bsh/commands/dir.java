@@ -13,7 +13,6 @@ import java.util.Date;
 import java.util.Vector;
 import java.util.GregorianCalendar;
 import java.util.Calendar;
-import java.util.Arrays;
 
 public class dir 
 {
@@ -56,11 +55,11 @@ public class dir
 		}
 
 		String [] files = file.list();
-		Arrays.sort(files);
+		files = StringUtil.bubbleSort(files);
 
 		for( int i=0; i< files.length; i++ ) {
 			File f = new File( dir + File.separator + files[i] );
-			StringBuilder sb = new StringBuilder();
+			StringBuffer sb = new StringBuffer();
 			sb.append( f.canRead() ? "r": "-" );
 			sb.append( f.canWrite() ? "w": "-" );
 			sb.append( "_" );
@@ -78,7 +77,7 @@ public class dir
 
 			// hack to get fixed length 'length' field
 			int fieldlen = 8;
-			StringBuilder len = new StringBuilder();
+			StringBuffer len = new StringBuffer();
 			for(int j=0; j<fieldlen; j++)
 				len.append(" ");
 			len.insert(0, f.length());

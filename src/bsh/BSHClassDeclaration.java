@@ -52,26 +52,20 @@ class BSHClassDeclaration extends SimpleNode
 	int numInterfaces;
 	boolean extend;
 	boolean isInterface;
-	private Class<?> generatedClass;
 
 	BSHClassDeclaration(int id) { super(id); }
 
 	/**
 	*/
-	public synchronized Object eval(final CallStack callstack, final Interpreter interpreter ) throws EvalError {
-		if (generatedClass == null) {
-			generatedClass = generateClass(callstack, interpreter);
-		}
-		return generatedClass;
-	}
-
-
-	private Class<?> generateClass(final CallStack callstack, final Interpreter interpreter) throws EvalError {
+	public Object eval( CallStack callstack, Interpreter interpreter )
+		throws EvalError
+	{
 		int child = 0;
 
 		// resolve superclass if any
 		Class superClass = null;
-		if ( extend ) {
+		if ( extend ) 
+		{
 			BSHAmbiguousName superNode = (BSHAmbiguousName)jjtGetChild(child++);
 			superClass = superNode.toClass( callstack, interpreter );
 		}
@@ -83,24 +77,28 @@ class BSHClassDeclaration extends SimpleNode
 			interfaces[i] = node.toClass(callstack, interpreter);
 			if ( !interfaces[i].isInterface() )
 				throw new EvalError(
-					"Type: "+node.text+" is not an interface!",
+					"Type: "+node.text+" is not an interface!", 
 					this, callstack );
 		}
 
 		BSHBlock block;
 		// Get the class body BSHBlock
 		if ( child < jjtGetNumChildren() )
-			block = (BSHBlock) jjtGetChild(child);
+			block = (BSHBlock)jjtGetChild(child);
 		else
 			block = new BSHBlock( ParserTreeConstants.JJTBLOCK );
 
-		return ClassGenerator.getClassGenerator().generateClass(
-			name, modifiers, interfaces, superClass, block, isInterface,
-			callstack, interpreter );
+		try {
+			return ClassGenerator.getClassGenerator().generateClass( 
+				name, modifiers, interfaces, superClass, block, isInterface,
+				callstack, interpreter );
+		} catch ( UtilEvalError e ) {
+			throw e.toEvalError( this, callstack );
+		}
+
 	}
 
-
 	public String toString() {
-		return "ClassDeclaration: " + name;
+		return "ClassDeclaration: "+name;
 	}
 }

@@ -97,10 +97,10 @@ public class ClassBrowser extends JSplitPane
 		}	
 	}
 
-	String [] toSortedStrings ( Collection<String> c ) {
-		String[] sa = c.toArray(new String[0]);
-		Arrays.sort(sa);
-		return sa;
+	String [] toSortedStrings ( Collection c ) {
+		List l = new ArrayList( c );
+		String [] sa = (String[])(l.toArray( new String[0] ));
+		return StringUtil.bubbleSort(sa);
 	}
 
 	void setClist( String packagename ) {
@@ -308,7 +308,7 @@ public class ClassBrowser extends JSplitPane
 			public void valueChanged(TreeSelectionEvent e) {
 				TreePath tp = e.getPath();
 				Object [] oa = tp.getPath();
-				StringBuilder selectedPackage = new StringBuilder();
+				StringBuffer selectedPackage = new StringBuffer();
 				for(int i=1; i<oa.length; i++) {
 					selectedPackage.append( oa[i].toString() );
 					if ( i+1 < oa.length )
@@ -597,7 +597,7 @@ public class ClassBrowser extends JSplitPane
 		*/
 		void addNodeMap( TreeNode node ) {
 
-			StringBuilder sb = new StringBuilder();
+			StringBuffer sb = new StringBuffer();
 			TreeNode tn = node;
 			while( tn != root ) {
 				sb.insert(0, tn.toString() );

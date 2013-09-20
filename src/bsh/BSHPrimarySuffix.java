@@ -128,7 +128,7 @@ class BSHPrimarySuffix extends SimpleNode
 		}
 		catch(ReflectError e)
 		{
-			throw new EvalError("reflection error: " + e, this, callstack, e );
+			throw new EvalError("reflection error: " + e, this, callstack );
 		}
 		catch(InvocationTargetException e)
 		{
@@ -178,7 +178,7 @@ class BSHPrimarySuffix extends SimpleNode
 			} catch ( ReflectError e ) {
 				throw new EvalError(
 					"Error in method invocation: " + e.getMessage(), 
-					this, callstack, e );
+					this, callstack );
 			} catch ( InvocationTargetException e ) 
 			{
 				String msg = "Method Invocation "+field;

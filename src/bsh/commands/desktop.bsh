@@ -197,6 +197,8 @@ desktop()
 		If available, add a listener for classpath mapping
 		I'm planning to implement a GUI progress indicator here
 
+	if ( Capabilities.canGenerateInterfaces() ) 
+	{
 		import bsh.classpath.BshClassPath;
 		classFeedbackListener = new BshClassPath.MappingFeedback() 
 		{
@@ -206,19 +208,17 @@ desktop()
 			endClassMapping() { }
 		};
 		BshClassPath.addMappingFeedback( classFeedbackListener );
+	}
 	*/
 
 	// start one terminal
 	workSpace=makeWorkspace( ""+windowCount++	);
 
+	frame.setSize(800,600);
+	frame.show();
+	
 	Util.endSplashScreen();
-        EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				frame.setSize(800,600);
-				frame.setVisible(true);
-				frame.toFront();
-				workSpace.frame.selected=true;
-			}
-		}
-	);
+	
+	frame.toFront();
+	workSpace.frame.selected=true;
 }

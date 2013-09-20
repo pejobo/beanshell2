@@ -1,12 +1,6 @@
 package	bsh;
 
-import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Arrays;
-
+import java.util.*;
 
 /**
 	A namespace which maintains an external map of values held in variables in
@@ -28,14 +22,14 @@ import java.util.Arrays;
 	introduced.
 */
 /*
-	Implementation notes:  bsh methods are not currently exported to the
+	Implementation notes:  bsh methods are not currently expored to the
 	external namespace.  All that would be required to add this is to override
 	setMethod() and provide a friendlier view than vector (currently used) for
 	overloaded forms (perhaps a map by method SignatureKey).
 */
 public class ExternalNameSpace extends NameSpace
 {
-	private Map<String,Object> externalMap;
+	private Map externalMap;
 
     public ExternalNameSpace() 
 	{
@@ -44,12 +38,12 @@ public class ExternalNameSpace extends NameSpace
 
 	/**
 	*/
-    public ExternalNameSpace( NameSpace parent, String name, Map<String,Object> externalMap ) 
+    public ExternalNameSpace( NameSpace parent, String name, Map externalMap ) 
 	{
 		super( parent, name );
 
 		if ( externalMap == null )
-			externalMap = new HashMap<String,Object>();
+			externalMap = new HashMap();
 			
 		this.externalMap = externalMap;
 
@@ -58,7 +52,7 @@ public class ExternalNameSpace extends NameSpace
 	/**
 		Get the map view of this namespace.
 	*/
-	public Map<String,Object> getMap() { return externalMap; }
+	public Map getMap() { return externalMap; }
 
 	/**
 		Set the external Map which to which this namespace synchronizes.
@@ -66,7 +60,7 @@ public class ExternalNameSpace extends NameSpace
 		map values are retained in the external map, but are removed from the
 		BeanShell namespace.
 	*/
-	public void setMap( Map<String,Object> map ) 
+	public void setMap( Map map ) 
 	{ 
 		// Detach any existing namespace to preserve it, then clear this
 		// namespace and set the new one
@@ -98,7 +92,7 @@ public class ExternalNameSpace extends NameSpace
 	public String [] getVariableNames() 
 	{
 		// union of the names in the internal namespace and external map
-		Set<String> nameSet = new HashSet<String>();
+		Set nameSet = new HashSet();
 		String [] nsNames = super.getVariableNames();
 		nameSet.addAll( Arrays.asList( nsNames ) );
 		nameSet.addAll( externalMap.keySet() );
@@ -120,9 +114,6 @@ public class ExternalNameSpace extends NameSpace
 	{
 		// check the external map for the variable name
 		Object value = externalMap.get( name );
-
-		if ( value == null && externalMap.containsKey( name ) )
-			value = Primitive.NULL;
 
 		Variable var;
 		if ( value == null ) 
@@ -179,10 +170,10 @@ public class ExternalNameSpace extends NameSpace
 		Note: we could override this method to allow bsh methods to appear in
 		the external map.
 	*/
-    public void	setMethod( BshMethod method )
+    public void	setMethod( String name, BshMethod method )
 		throws UtilEvalError
 	{
-		super.setMethod( method );
+		super.setMethod( name, method );
     }
 
 	/*
@@ -201,9 +192,9 @@ public class ExternalNameSpace extends NameSpace
 		Note: this method should be overridden to add the names from the
 		external map, as is done in getVariableNames();
 	*/
-	protected void getAllNamesAux( List<String> list ) 
+	protected void getAllNamesAux( Vector vec ) 
 	{
-		super.getAllNamesAux( list );
+		super.getAllNamesAux( vec );
 	}
 
 	/**

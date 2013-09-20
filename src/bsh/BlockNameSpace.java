@@ -158,7 +158,7 @@ class BlockNameSpace extends NameSpace
 		"if" statement). 
 		@see #getBlockThis( Interpreter )
 	*/
-    public This getThis( Interpreter declaringInterpreter ) {
+    This getThis( Interpreter declaringInterpreter ) {
 		return getNonBlockParent().getThis( declaringInterpreter );
 	}
 
@@ -183,10 +183,10 @@ class BlockNameSpace extends NameSpace
 		getParent().importPackage( name );
 	}
 
-    public void	setMethod(BshMethod method) 
+    public void	setMethod(String name, BshMethod method) 
 		throws UtilEvalError
 	{
-		getParent().setMethod( method );
+		getParent().setMethod( name, method );
 	}
 }
 
