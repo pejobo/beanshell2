@@ -37,6 +37,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
@@ -332,30 +333,27 @@ final class Reflect {
 		 */
 	private static Field findAccessibleField(Class clas, String fieldName) throws UtilEvalError, NoSuchFieldException {
 		Field field;
-
 		// Quick check catches public fields include those in interfaces
 		try {
 			field = clas.getField(fieldName);
-			field.setAccessible(true);
 			return field;
 		} catch (NoSuchFieldException e) {
-			// fallthrough
+			// ignore
 		}
-
-		// Now, on with the hunt...
-		while (clas != null) {
-			try {
-				field = clas.getDeclaredField(fieldName);
-				field.setAccessible(true);
-				return field;
-
-				// Not found, fall through to next class
-
-			} catch (NoSuchFieldException e) {
-				// fallthrough
+		if (Capabilities.haveAccessibility()) {
+			// try hidden fields (protected, private, package protected)
+			while (clas != null) {
+				try {
+					field = clas.getDeclaredField(fieldName);
+					field.setAccessible(true);
+					return field;
+				} catch (SecurityException e) {
+					break;
+				} catch (NoSuchFieldException e) {
+					// Not found, fall through to next class
+				}
+				clas = clas.getSuperclass();
 			}
-
-			clas = clas.getSuperclass();
 		}
 		throw new NoSuchFieldException(fieldName);
 	}
@@ -435,8 +433,14 @@ final class Reflect {
 			// This is the first time we've seen this method, set accessibility
 			// Note: even if it's a public method, we may have found it in a
 			// non-public class
-			if (method != null && (!publicOnly || isPublic(method))) {
-				method.setAccessible(true);
+			if (method != null) {
+				if (!publicOnly || (isPublic(method) && !isPublic(method.getDeclaringClass()))) {
+					try {
+						method.setAccessible(true);
+					} catch (SecurityException e) {
+						method = null;
+					}
+				}
 			}
 
 			// If succeeded cache the resolved method.
@@ -565,7 +569,7 @@ final class Reflect {
 			throw cantFindConstructor(clas, types);
 		}
 
-		if (!isPublic(con)) {
+		if (!isPublic(con) && Capabilities.haveAccessibility()) {
 			con.setAccessible(true);
 		}
 
@@ -882,23 +886,26 @@ final class Reflect {
 	}
 
 
-	private static boolean isPublic(Class c) {
-		return Modifier.isPublic(c.getModifiers());
+	private static boolean isPublic(Member member) {
+		return Modifier.isPublic(member.getModifiers());
 	}
 
 
-	private static boolean isPublic(Method m) {
-		return Modifier.isPublic(m.getModifiers());
-	}
-
-
-	private static boolean isPublic(Constructor c) {
-		return Modifier.isPublic(c.getModifiers());
+	private static boolean isPublic(Class clazz) {
+		return Modifier.isPublic(clazz.getModifiers());
 	}
 
 
 	private static boolean isStatic(Method m) {
 		return Modifier.isStatic(m.getModifiers());
 	}
+
+
+	static void setAccessible(final Field field) {
+		if ( ! isPublic(field) && Capabilities.haveAccessibility()) {
+			field.setAccessible(true);
+		}
+	}
+
 }
 

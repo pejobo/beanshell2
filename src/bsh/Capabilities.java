@@ -33,6 +33,7 @@
 
 package bsh;
 
+import java.lang.reflect.Field;
 import java.util.Hashtable;
 
 /**
@@ -80,6 +81,13 @@ public class Capabilities
 			// test basic access
 			try {
 				String.class.getDeclaredMethods();
+				try {
+					final Field field = Capabilities.class.getField("classes");
+					field.setAccessible(true);
+					field.setAccessible(false);
+				} catch (NoSuchFieldException e) {
+					// ignore
+				}
 			} catch ( SecurityException e ) {
 				throw new Unavailable("Accessibility unavailable: "+e);
 			}
