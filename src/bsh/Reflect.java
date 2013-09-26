@@ -294,9 +294,8 @@ final class Reflect {
 		try {
 			if (Capabilities.haveAccessibility()) {
 				field = findAccessibleField(clas, fieldName);
-			} else
-			// Class getField() finds only public (and in interfaces, etc.)
-			{
+			} else {
+			    // Class getField() finds only public fields
 				field = clas.getField(fieldName);
 			}
 		} catch (NoSuchFieldException e) {
@@ -332,29 +331,30 @@ final class Reflect {
 			 exceptions during the search.
 		 */
 	private static Field findAccessibleField(Class clas, String fieldName) throws UtilEvalError, NoSuchFieldException {
-		Field field;
 		// Quick check catches public fields include those in interfaces
-		try {
-			field = clas.getField(fieldName);
-			return field;
+        try {
+            return clas.getField(fieldName);
 		} catch (NoSuchFieldException e) {
 			// ignore
 		}
-		if (Capabilities.haveAccessibility()) {
-			// try hidden fields (protected, private, package protected)
-			while (clas != null) {
-				try {
-					field = clas.getDeclaredField(fieldName);
-					field.setAccessible(true);
-					return field;
-				} catch (SecurityException e) {
-					break;
-				} catch (NoSuchFieldException e) {
-					// Not found, fall through to next class
-				}
-				clas = clas.getSuperclass();
-			}
-		}
+        // try hidden fields (protected, private, package protected)
+        if (Capabilities.haveAccessibility()) {
+            try {
+                while (clas != null) {
+                    final Field[] declaredFields = clas.getDeclaredFields();
+                    for (int i = 0; i < declaredFields.length; i++) {
+                        Field field = declaredFields[i];
+                        if (field.getName().equals(fieldName)) {
+                            field.setAccessible(true);
+                            return field;
+                        }
+                    }
+                    clas = clas.getSuperclass();
+                }
+            } catch (SecurityException e) {
+               // ignore -> NoSuchFieldException
+            }
+        }
 		throw new NoSuchFieldException(fieldName);
 	}
 
@@ -434,13 +434,15 @@ final class Reflect {
 			// Note: even if it's a public method, we may have found it in a
 			// non-public class
 			if (method != null) {
-				if (!publicOnly || (isPublic(method) && !isPublic(method.getDeclaringClass()))) {
-					try {
-						method.setAccessible(true);
-					} catch (SecurityException e) {
-						method = null;
-					}
-				}
+                try {
+                    if (!isPublic(method) && !publicOnly) {
+                        method.setAccessible(true);
+                    } else if (isPublic(method) && !isPublic(method.getDeclaringClass())) {
+                        method.setAccessible(true); // todo: need a test case
+                    }
+                } catch (SecurityException e) {
+                    method = null;
+                }
 			}
 
 			// If succeeded cache the resolved method.
