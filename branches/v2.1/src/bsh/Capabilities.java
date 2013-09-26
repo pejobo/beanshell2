@@ -33,7 +33,7 @@
 
 package bsh;
 
-import java.lang.reflect.Field;
+import java.lang.reflect.AccessibleObject;
 import java.util.Hashtable;
 
 /**
@@ -79,10 +79,10 @@ public class Capabilities
 		} else {
 			String.class.getDeclaredMethods(); // test basic access
 			try {
-				final Field field = Capabilities.class.getField("classes");
-				field.setAccessible(true);
-				field.setAccessible(false);
-			} catch (NoSuchFieldException e) {
+                final AccessibleObject member = Class.class.getDeclaredConstructor(new Class[0]);
+                member.setAccessible(true);
+                member.setAccessible(false);
+			} catch (NoSuchMethodException e) {
 				// ignore
 			}
 			accessibility = true;
