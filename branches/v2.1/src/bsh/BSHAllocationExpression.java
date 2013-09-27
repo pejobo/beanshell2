@@ -124,8 +124,7 @@ class BSHAllocationExpression extends SimpleNode
         try {
             obj = Reflect.constructObject( type, args );
         } catch ( ReflectError e) {
-            throw new EvalError(
-				"Constructor error: " + e.getMessage(), this, callstack );
+            throw new EvalError("Constructor error: " + e.getMessage(), this, callstack, e );
         } catch (InvocationTargetException e) {
 			// No need to wrap this debug
 			Interpreter.debug("The constructor threw an exception:\n\t" + e.getTargetException());

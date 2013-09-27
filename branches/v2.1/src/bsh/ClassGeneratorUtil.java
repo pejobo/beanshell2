@@ -163,6 +163,9 @@ public class ClassGeneratorUtil implements Constants {
 		for (DelayedEvalBshMethod bshmethod : bshmethods) {
 			if (bshmethod.getName().equals(classBaseName)) {
 				consl.add(bshmethod);
+                if ((packageName == null) && !Capabilities.haveAccessibility()) {
+                    bshmethod.makePublic();
+                }
 			} else {
 				methodsl.add(bshmethod);
 			}
@@ -1000,7 +1003,7 @@ public class ClassGeneratorUtil implements Constants {
 			if (e instanceof InvocationTargetException) {
 				e = (Exception) ((InvocationTargetException) e).getTargetException();
 			}
-			throw new InterpreterError("Error in class initialization: " + e);
+			throw new InterpreterError("Error in class initialization: " + e, e);
 		}
 	}
 

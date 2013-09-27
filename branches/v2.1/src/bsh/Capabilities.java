@@ -63,7 +63,7 @@ public class Capabilities
 		Note that even if both are true it does not necessarily mean that we 
 		have runtime permission to access the fields... Java security has
 	 	a say in it.
-		@see bsh.ReflectManager
+		@see bsh.Reflect
 	*/
 	public static boolean haveAccessibility() 
 	{
@@ -71,19 +71,18 @@ public class Capabilities
 	}
 
 	public static void setAccessibility( boolean b ) 
-		throws Unavailable
-	{ 
+	{
 		if ( b == false )
 		{
 			accessibility = false;
 		} else {
 			String.class.getDeclaredMethods(); // test basic access
 			try {
-                final AccessibleObject member = Class.class.getDeclaredConstructor(new Class[0]);
+                final AccessibleObject member = String.class.getDeclaredField("value");
                 member.setAccessible(true);
                 member.setAccessible(false);
-			} catch (NoSuchMethodException e) {
-				// ignore
+			} catch (NoSuchFieldException e) {
+                // ignore
 			}
 			accessibility = true;
 		}

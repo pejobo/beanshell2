@@ -310,18 +310,11 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		Variable existing = getVariableImpl( name, recurse );
 
 		// Found an existing variable here (or above if recurse allowed)
-		if ( existing != null )
-		{
-			try {
-				existing.setValue( value, Variable.ASSIGNMENT );
-			} catch ( UtilEvalError e ) {
-				throw new UtilEvalError(
-					"Variable assignment: " + name + ": " + e.getMessage());
-			}
-		} else 
-		// No previous variable definition found here (or above if recurse)
-		{
-			if ( strictJava )
+		if ( existing != null ) {
+			existing.setValue( value, Variable.ASSIGNMENT );
+		} else {
+            // No previous variable definition found here (or above if recurse)
+            if ( strictJava )
 				throw new UtilEvalError(
 					"(Strict Java mode) Assignment to undeclared variable: "
 					+name );

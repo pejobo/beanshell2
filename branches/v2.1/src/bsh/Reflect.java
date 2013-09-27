@@ -579,11 +579,11 @@ final class Reflect {
 		try {
 			return con.newInstance(args);
 		} catch (InstantiationException e) {
-			throw new ReflectError("The class " + clas + " is abstract ");
+			throw new ReflectError("The class " + clas + " is abstract ", e);
 		} catch (IllegalAccessException e) {
-			throw new ReflectError("We don't have permission to create an instance." + "Use setAccessibility(true) to enable access.");
+			throw new ReflectError("We don't have permission to create an instance. Use setAccessibility(true) to enable access.", e);
 		} catch (IllegalArgumentException e) {
-			throw new ReflectError("The number of arguments was wrong");
+			throw new ReflectError("The number of arguments was wrong", e);
 		}
 	}
 
