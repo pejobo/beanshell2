@@ -1,0 +1,30 @@
+#summary BeanShell supports closures which should be preferred prior to class definitions
+
+This is how a closure definition looks like:
+{{{
+  Person(first, last) {
+     firstName = first;
+     lastName = last;
+     return this;
+  }
+}}}
+
+Create and use instances:
+{{{
+  john = Person("John", "Doe");
+  print(john.lastName);
+}}}
+
+With method definition:
+{{{
+  Person(first, last) {
+     firstName = first;
+     lastName = last;
+     fullName() {
+        return firstName + " " + lastName;
+     }
+     return this;
+  }
+}}}
+
+
