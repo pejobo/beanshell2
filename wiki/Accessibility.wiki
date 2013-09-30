@@ -1,0 +1,21 @@
+#summary In accessibilty mode you can call protected or private methods and modify proteced/private fields
+
+Somtimes it comes in handy that you can call private methods and manipulate private fields of any instance. To do this in beanshell just call
+
+{{{
+  setAccessibility(true);
+}}}
+
+
+You'll also need this if you extend classes and want to access protected fields or methods of the super class.
+
+Up to version *2.1.5* the accessibility mode was transparently switched on the first class definition:
+{{{
+ bsh % print(Capabilities.haveAccessibility());
+ false
+ bsh % class Foo { };
+ bsh % print(Capabilities.haveAccessibility());
+ true
+}}}
+
+Starting with verion *2.1.6* the accessibility mode must be explicitly switched on by the user.
