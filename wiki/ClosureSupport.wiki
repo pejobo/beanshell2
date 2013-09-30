@@ -70,3 +70,8 @@ Instead of implementing interfaces you could also extend (abstract) classes like
       }
    };
 }}}
+
+When extending classes be aware that you can use protected members only if you switch on _accessibility_:
+{{{
+  setAccessibility(true);
+}}}
