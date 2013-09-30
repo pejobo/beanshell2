@@ -1,0 +1,11 @@
+#summary Importent update
+
+=v2.1.6=
+
+27th September 2013
+
+This update changes the behaviour when defining classes which define protected methods, constructors or fields or which access inherited protected methods, constructors or fields. If your (script) code doesn't explicitly switches on the [http://code.google.com/p/beanshell2/wiki/Accessibility accessibility mode] your *script code will break* with this update. 
+
+To pretain the old behaviour either call `bsh.Capabilities.setAccessibility(true)` in your java code or `setAccessibility(true)` in your script code.
+
+This change was done to allow the usage of beanshell in [http://code.google.com/p/beanshell2/wiki/SecurityManager security restricted environments].
