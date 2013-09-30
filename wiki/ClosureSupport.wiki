@@ -9,11 +9,13 @@ This is how a closure definition looks like:
   }
 }}}
 
+
 Create and use instances:
 {{{
   john = Person("John", "Doe");
   print(john.lastName);
 }}}
+
 
 With method definition:
 {{{
@@ -28,3 +30,43 @@ With method definition:
 }}}
 
 
+
+Implementing interfaces is even simpler:
+{{{
+  myActionListener = new ActionListener() {
+     actionPerformed(event) {
+        print("actionPerformed");
+     }
+  }
+}}}
+
+
+This could be used in the same way as an anonymous class instance in Java:
+{{{
+   button = new JButton();
+   button.addActionListener(button);
+}}}
+
+
+Unlinke in Java not all methods of an interface must be overwritten. If you omit methods a call to this ommitted method will lead to a `java.lang.reflect.UndeclaredThrowableException` (caused by an `bsh.EvalError`). You could prevent this by defining a default methode `invoke` like this:
+{{{
+   myMouseListener = new MouseListener() {
+      void mouseClicked(MouseEvent e) {
+         print("mouse clicked: " + e);
+      }
+
+      invoke(methodName, args) {
+         print("undefined method call: " + methodName + Arrays.asList(args));
+      }
+   };
+}}}
+
+
+Instead of implementing interfaces you could also extend (abstract) classes like this:
+{{{
+   myMouseListener = new MouseAdapter() {
+      void mouseClicked(MouseEvent e) {
+         print("mouse clicked: " + e);
+      }
+   };
+}}}
