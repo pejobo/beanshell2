@@ -24,7 +24,7 @@ Example usage on java.lang.String class:
 }}}
 
 
-*You'll also need this if you extend classes to access protected methods or fields of super classes.*
+*You'll also need this when [http://code.google.com/p/beanshell2/wiki/DefiningClasses extending classes] to access inherited protected methods and fields.*
 
 Up to version *2.1.5* the accessibility mode was transparently switched on with the first class definition in your script:
 {{{
