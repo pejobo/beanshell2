@@ -1,6 +1,6 @@
 #summary BeanShell supports closures which should be preferred prior to class definitions
 
-This is how a closure definition looks like:
+This is what a closure definition looks like:
 {{{
   Person(first, last) {
      firstName = first;
@@ -48,7 +48,7 @@ This could be used in the same way as an anonymous class instance in Java:
 }}}
 
 
-Unlinke in Java not all methods of an interface must be overwritten. If you omit methods a call to this ommitted method will lead to a `java.lang.reflect.UndeclaredThrowableException` (caused by an `bsh.EvalError`). You could prevent this by defining a default method `invoke` like this:
+Unlike in Java not all methods of an interface must be overwritten. If you omit methods a call to this ommitted method will lead to a `java.lang.reflect.UndeclaredThrowableException` (caused by an `bsh.EvalError`). You could prevent this by defining a default method `invoke` like this:
 {{{
    myMouseListener = new MouseListener() {
       void mouseClicked(MouseEvent e) {
