@@ -1,11 +1,18 @@
 #summary Importent update
 
-=v2.1.6=
+=v2.1.6, 27th September 2013=
 
-27th September 2013
-
+== !BeanShell and SecurityManager ==
 This update changes the behaviour when defining classes which define protected methods, constructors or fields or which access inherited protected methods, constructors or fields. If your (script) code doesn't explicitly switches on the [http://code.google.com/p/beanshell2/wiki/Accessibility accessibility mode] your *script code will break* with this update. 
 
 To pretain the old behaviour either call `bsh.Capabilities.setAccessibility(true)` in your java code or `setAccessibility(true)` in your script code.
 
-This change was done to allow the usage of beanshell in [http://code.google.com/p/beanshell2/wiki/SecurityManager security restricted environments].
+This change was done to *allow the usage of beanshell in [http://code.google.com/p/beanshell2/wiki/SecurityManager security restricted environments]*. See issue #88 for code changes.
+
+== Version Number Format ==
+As you can see we dropped the old `<major>.<minor>b<release>` format, the new format is `<major>.<minor>.<release>`. This should work better with maven repositories.
+
+=v2.1b5, 21st November 2011=
+
+ * Do-while loop does not check condition on "continue" - issue #57
+ * Using JSR-223, exception is thrown for clause that shouldn't be evaluated - issue #60
