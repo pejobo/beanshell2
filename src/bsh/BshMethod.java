@@ -147,6 +147,15 @@ public class BshMethod
 
 	public Modifiers getModifiers() { return modifiers; }
 
+    public void makePublic() {
+        if (modifiers == null) {
+            modifiers = new Modifiers();
+        }
+        if (!modifiers.hasModifier("public")) {
+            modifiers.addModifier(Modifiers.METHOD, "public");
+        }
+    }
+
 	public String getName() { return name; }
 
 	/**

@@ -33,7 +33,7 @@
 
 package bsh;
 
-import java.lang.reflect.Field;
+import java.lang.reflect.AccessibleObject;
 import java.util.Hashtable;
 
 /**
@@ -63,7 +63,7 @@ public class Capabilities
 		Note that even if both are true it does not necessarily mean that we 
 		have runtime permission to access the fields... Java security has
 	 	a say in it.
-		@see bsh.ReflectManager
+		@see bsh.Reflect
 	*/
 	public static boolean haveAccessibility() 
 	{
@@ -71,27 +71,19 @@ public class Capabilities
 	}
 
 	public static void setAccessibility( boolean b ) 
-		throws Unavailable
-	{ 
+	{
 		if ( b == false )
 		{
 			accessibility = false;
 		} else {
-
-			// test basic access
+			String.class.getDeclaredMethods(); // test basic access
 			try {
-				String.class.getDeclaredMethods();
-				try {
-					final Field field = Capabilities.class.getField("classes");
-					field.setAccessible(true);
-					field.setAccessible(false);
-				} catch (NoSuchFieldException e) {
-					// ignore
-				}
-			} catch ( SecurityException e ) {
-				throw new Unavailable("Accessibility unavailable: "+e);
+                final AccessibleObject member = String.class.getDeclaredField("value");
+                member.setAccessible(true);
+                member.setAccessible(false);
+			} catch (NoSuchFieldException e) {
+                // ignore
 			}
-	
 			accessibility = true;
 		}
 		BshClassManager.clearResolveCache();
