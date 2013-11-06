@@ -55,7 +55,7 @@ public class PreparsedScriptTest {
 				"if (foo != void) print (\"check\");" +
 				"class Echo {\n" +
 				"\n" +
-				"   Object echo() {\n" +
+				"   public Object echo() {\n" +
 				"      return param;\n" +
 				"   }\n" +
 				"\n" +

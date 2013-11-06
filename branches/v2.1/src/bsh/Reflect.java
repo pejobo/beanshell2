@@ -430,19 +430,19 @@ final class Reflect {
 
 			checkFoundStaticMethod(method, staticOnly, clas);
 
-			// This is the first time we've seen this method, set accessibility
-			// Note: even if it's a public method, we may have found it in a
-			// non-public class
-			if (method != null) {
-                try {
-                    if (!isPublic(method) && !publicOnly) {
-                        method.setAccessible(true);
-                    } else if (isPublic(method) && !isPublic(method.getDeclaringClass())) {
-                        method.setAccessible(true); // todo: need a test case
-                    }
-                } catch (SecurityException e) {
-                    method = null;
-                }
+			// This is the first time we've seen this method, set accessibility if needed
+			if ((method != null) && !isPublic(method)) {
+				if (publicOnly) {
+					method = null;
+				} else {
+					Interpreter.debug("resolveJavaMethod - setting method accessible");
+					try {
+						method.setAccessible(true);
+					} catch (final SecurityException e) {
+						Interpreter.debug("resolveJavaMethod - setting accessible failed: " + e);
+						method = null;
+					}
+				}
 			}
 
 			// If succeeded cache the resolved method.

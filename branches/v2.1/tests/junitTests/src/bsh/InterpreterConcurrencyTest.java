@@ -17,7 +17,7 @@ public class InterpreterConcurrencyTest {
 			/*  8 */ "      	_s = s;\n" +
 			/*  9 */ "   	}\n" +
 			/*  0 */ "		\n" +
-			/* 11 */ "   	Object echo() {\n" +
+			/* 11 */ "   	public Object echo() {\n" +
 			/* 12 */ "      	return param;\n" +
 			/* 13 */ "   	}\n" +
 			/* 14 */ "		\n" +
