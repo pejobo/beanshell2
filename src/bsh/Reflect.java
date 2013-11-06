@@ -40,6 +40,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -56,6 +58,20 @@ import java.util.ArrayList;
 	level so they are less important, however the logic is messy.
 */
 final class Reflect {
+
+
+	/**
+	 * A comperator wich sorts methods according to {@@link #getVisibility}.
+	 */
+	public static final Comparator<Method> METHOD_COMPARATOR = new Comparator<Method>() {
+		public int compare(final Method a, final Method b) {
+			final int scoreA = getVisibility(a);
+			final int scoreB = getVisibility(b);
+			return (scoreA < scoreB) ? -1 : ((scoreA == scoreB) ? 0 : 1);
+
+		}
+	};
+
 
 	/**
 	 * Invoke method on arbitrary object instance.
@@ -433,6 +449,7 @@ final class Reflect {
 			// This is the first time we've seen this method, set accessibility if needed
 			if ((method != null) && !isPublic(method)) {
 				if (publicOnly) {
+					Interpreter.debug("resolveJavaMethod - no accessible method found");
 					method = null;
 				} else {
 					Interpreter.debug("resolveJavaMethod - setting method accessible");
@@ -461,42 +478,44 @@ final class Reflect {
 	 *
 	 * @return the method or null for not found
 	 */
-	private static Method findOverloadedMethod(Class baseClass, String methodName, Class[] types, boolean publicOnly) {
+	private static Method findOverloadedMethod(final Class baseClass, final String methodName, final Class[] types, final boolean publicOnly) {
 		if (Interpreter.DEBUG) {
 			Interpreter.debug("Searching for method: " + StringUtil.methodString(methodName, types) + " in '" + baseClass.getName() + "'");
 		}
-
-		List<Method> publicMethods = new ArrayList<Method>();
-		List<Method> nonPublicMethods = publicOnly ? null : new ArrayList<Method>();
-		gatherMethodsRecursive(baseClass, methodName, types.length, publicMethods, nonPublicMethods);
-
-		if (Interpreter.DEBUG) {
-			Interpreter.debug("Looking for most specific method: " + methodName);
+		if (publicOnly) {
+			final List<Method> publicMethods = getPublicMethods(baseClass, methodName, types.length);
+			final Method result = findMostSpecificMethod(types, publicMethods);
+			return result;
+		} else {
+			final List<Method> publicMethods = new ArrayList<Method>();
+			final List<Method> nonPublicMethods = new ArrayList<Method>();
+			collectMethods(baseClass, methodName, types.length, publicMethods, nonPublicMethods);
+			Collections.sort(publicMethods, METHOD_COMPARATOR);
+			Method method = findMostSpecificMethod(types, publicMethods);
+			if (method == null) {
+				method = findMostSpecificMethod(types, nonPublicMethods);
+			}
+			return method;
 		}
-		Method method = findMostSpecificMethod(types, publicMethods);
-		if (method == null && nonPublicMethods != null) {
-			method = findMostSpecificMethod(types, nonPublicMethods);
-		}
-
-		return method;
 	}
 
-	/*
-			 Climb the class and interface inheritence graph of the type and collect
-			 all methods matching the specified name and criterion.  If publicOnly
-			 is true then only public methods in *public* classes or interfaces will
-			 be returned.  In the normal (non-accessible) case this addresses the
-			 problem that arises when a package private class or private inner class
-			 implements a public interface or derives from a public type.
-			  <p/>
 
-			 preseving old comments for deleted getCandidateMethods() - fschmidt
-		 */
+	private static List<Method> getPublicMethods(final Class baseClass, final String methodName, final int numArgs) {
+		final ArrayList<Method> result = new ArrayList<Method>();
+		for (final Method m : baseClass.getMethods()) {
+			if (matchesNameAndSignature(m, methodName, numArgs)) {
+				if (isPublic(m.getDeclaringClass()) && isPublic(m)) {
+					result.add(m);
+				}
+			}
+		}
+		return result;
+	}
 
 
 	/**
-	 * Accumulate all methods, optionally including non-public methods,
-	 * class and interface, in the inheritence tree of baseClass.
+	 * Accumulate all matching methods, including non-public methods in the
+	 * inheritence tree of provided baseClass.
 	 * <p/>
 	 * This method is analogous to Class getMethods() which returns all public
 	 * methods in the inheritence tree.
@@ -507,38 +526,27 @@ final class Reflect {
 	 * words, sometimes we'll find public methods that we can't use directly
 	 * and we have to find the same public method in a parent class or
 	 * interface.
-	 *
-	 * @return the candidate methods vector
 	 */
-	private static void gatherMethodsRecursive(Class baseClass, String methodName, int numArgs, List<Method> publicMethods, List<Method> nonPublicMethods) {
-		// Do we have a superclass? (interfaces don't, etc.)
-		Class superclass = baseClass.getSuperclass();
+	private static void collectMethods(final Class baseClass, final String methodName, final int numArgs, final List<Method> publicMethods, final List<Method> nonPublicMethods) {
+		final Class superclass = baseClass.getSuperclass();
 		if (superclass != null) {
-			gatherMethodsRecursive(superclass, methodName, numArgs, publicMethods, nonPublicMethods);
+			collectMethods(superclass, methodName, numArgs, publicMethods, nonPublicMethods);
 		}
-
-		// Add methods of the current class to the list.
-		// In public case be careful to only add methods from a public class
-		// and to use getMethods() instead of getDeclaredMethods()
-		// (This addresses secure environments)
-		boolean isPublicClass = isPublic(baseClass);
-		if (isPublicClass || nonPublicMethods != null) {
-			Method[] methods = nonPublicMethods == null ? baseClass.getMethods() : baseClass.getDeclaredMethods();
-			for (Method m : methods) {
-				if (m.getName().equals(methodName) && (m.isVarArgs() ? m.getParameterTypes().length - 1 <= numArgs : m.getParameterTypes().length == numArgs)) {
-					if (isPublicClass && isPublic(m)) {
-						publicMethods.add(m);
-					} else if (nonPublicMethods != null) {
-						nonPublicMethods.add(m);
-					}
+		final Method[] methods = baseClass.getDeclaredMethods();
+		for (final Method m : methods) {
+			if (matchesNameAndSignature(m, methodName, numArgs)) {
+				if (isPublic(m.getDeclaringClass()) && isPublic(m)) {
+					publicMethods.add(m);
+				} else {
+					nonPublicMethods.add(m);
 				}
 			}
 		}
+	}
 
-		// Does the class or interface implement interfaces?
-		for (Class intf : baseClass.getInterfaces()) {
-			gatherMethodsRecursive(intf, methodName, numArgs, publicMethods, nonPublicMethods);
-		}
+
+	private static boolean matchesNameAndSignature(final Method m, final String methodName, final int numArgs) {
+		return m.getName().equals(methodName) && (m.isVarArgs() ? m.getParameterTypes().length - 1 <= numArgs : m.getParameterTypes().length == numArgs);
 	}
 
 
@@ -622,6 +630,9 @@ final class Reflect {
 	 * @see #findMostSpecificSignature(Class[], Class[][])
 	 */
 	private static Method findMostSpecificMethod(Class[] idealMatch, List<Method> methods) {
+		if (Interpreter.DEBUG) {
+			Interpreter.debug("Looking for most specific method");
+		}
 		// copy signatures into array for findMostSpecificMethod()
 		List<Class[]> candidateSigs = new ArrayList<Class[]>();
 		List<Method> methodList = new ArrayList<Method>();
@@ -907,6 +918,23 @@ final class Reflect {
 		if ( ! isPublic(field) && Capabilities.haveAccessibility()) {
 			field.setAccessible(true);
 		}
+	}
+
+
+	/**
+	 * A method from a non public class gets a visibility score of 0.
+	 * A method from a public class gets a visibility score of 1.
+	 * And an interface method will get a visibility score of 2.
+	 */
+	private static int getVisibility(final Method method) {
+		final Class<?> declaringClass = method.getDeclaringClass();
+		if (declaringClass.isInterface()) {
+			return 2; // interface methods are always public
+		}
+		if (isPublic(declaringClass)) {
+			return 1;
+		}
+		return 0;
 	}
 
 }
