@@ -504,9 +504,7 @@ final class Reflect {
 		final ArrayList<Method> result = new ArrayList<Method>();
 		for (final Method m : baseClass.getMethods()) {
 			if (matchesNameAndSignature(m, methodName, numArgs)) {
-				if (isPublic(m.getDeclaringClass()) && isPublic(m)) {
-					result.add(m);
-				}
+				result.add(m);
 			}
 		}
 		return result;
