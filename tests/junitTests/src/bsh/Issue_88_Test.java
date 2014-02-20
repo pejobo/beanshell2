@@ -3,6 +3,7 @@ package bsh;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static bsh.TestUtil.eval;
 import static junit.framework.Assert.assertEquals;
 
 @RunWith(FilteredTestRunner.class)
@@ -27,6 +28,14 @@ public class Issue_88_Test {
 	}
 
 
+	@Test
+	public void community_test_cases() throws Exception {
+		assertEquals(0, eval("Collections.unmodifiableList(new ArrayList()).size();"));
+		assertEquals(0, eval("new HashMap().entrySet().size();"));
+		assertEquals(Boolean.FALSE, eval("new HashMap().keySet().iterator().hasNext();"));
+	}
+
+
 	public interface Public {
 		Object method(String param);
 	}
@@ -47,6 +56,7 @@ public class Issue_88_Test {
 		}
 
 	}
+
 
 	public class Implementation extends AbstractImplementation {
 
