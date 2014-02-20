@@ -1,5 +1,11 @@
 #summary Importent update
 
+=v2.1.8, 20th February 2014=
+
+Hot-Fix build for bugs introduced with issue#88
+
+*[https://beanshell2.googlecode.com/svn/branches/v2.1/downloads/bsh-2.1.8.jar DOWNLOAD v2.1.8]*
+
 =v2.1.6, 27th September 2013=
 
 == !BeanShell and SecurityManager ==
