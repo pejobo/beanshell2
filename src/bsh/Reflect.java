@@ -40,8 +40,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.AbstractCollection;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -482,32 +485,15 @@ final class Reflect {
 		if (Interpreter.DEBUG) {
 			Interpreter.debug("Searching for method: " + StringUtil.methodString(methodName, types) + " in '" + baseClass.getName() + "'");
 		}
-		if (publicOnly) {
-			final List<Method> publicMethods = getPublicMethods(baseClass, methodName, types.length);
-			final Method result = findMostSpecificMethod(types, publicMethods);
-			return result;
-		} else {
-			final List<Method> publicMethods = new ArrayList<Method>();
-			final List<Method> nonPublicMethods = new ArrayList<Method>();
-			collectMethods(baseClass, methodName, types.length, publicMethods, nonPublicMethods);
-			Collections.sort(publicMethods, METHOD_COMPARATOR);
-			Method method = findMostSpecificMethod(types, publicMethods);
-			if (method == null) {
-				method = findMostSpecificMethod(types, nonPublicMethods);
-			}
-			return method;
+		final List<Method> publicMethods = new ArrayList<Method>();
+		final Collection<Method> nonPublicMethods = publicOnly ? new DummyCollection<Method>() : new ArrayList<Method>();
+		collectMethods(baseClass, methodName, types.length, publicMethods, nonPublicMethods);
+		Collections.sort(publicMethods, METHOD_COMPARATOR);
+		Method method = findMostSpecificMethod(types, publicMethods);
+		if (method == null) {
+			method = findMostSpecificMethod(types, nonPublicMethods);
 		}
-	}
-
-
-	private static List<Method> getPublicMethods(final Class baseClass, final String methodName, final int numArgs) {
-		final ArrayList<Method> result = new ArrayList<Method>();
-		for (final Method m : baseClass.getMethods()) {
-			if (matchesNameAndSignature(m, methodName, numArgs)) {
-				result.add(m);
-			}
-		}
-		return result;
+		return method;
 	}
 
 
@@ -525,7 +511,7 @@ final class Reflect {
 	 * and we have to find the same public method in a parent class or
 	 * interface.
 	 */
-	private static void collectMethods(final Class baseClass, final String methodName, final int numArgs, final List<Method> publicMethods, final List<Method> nonPublicMethods) {
+	private static void collectMethods(final Class baseClass, final String methodName, final int numArgs, final Collection<Method> publicMethods, final Collection<Method> nonPublicMethods) {
 		final Class superclass = baseClass.getSuperclass();
 		if (superclass != null) {
 			collectMethods(superclass, methodName, numArgs, publicMethods, nonPublicMethods);
@@ -539,6 +525,9 @@ final class Reflect {
 					nonPublicMethods.add(m);
 				}
 			}
+		}
+		for (final Class interfaceClass :baseClass.getInterfaces()){
+			collectMethods(interfaceClass, methodName, numArgs, publicMethods, nonPublicMethods);
 		}
 	}
 
@@ -627,7 +616,7 @@ final class Reflect {
 	 *                types of their arguments.
 	 * @see #findMostSpecificSignature(Class[], Class[][])
 	 */
-	private static Method findMostSpecificMethod(Class[] idealMatch, List<Method> methods) {
+	private static Method findMostSpecificMethod(final Class[] idealMatch, final Collection<Method> methods) {
 		if (Interpreter.DEBUG) {
 			Interpreter.debug("Looking for most specific method");
 		}
@@ -935,5 +924,25 @@ final class Reflect {
 		return 0;
 	}
 
-}
 
+	private static class DummyCollection<T> extends AbstractCollection<T> {
+
+		@Override
+		public Iterator<T> iterator() {
+			return Collections.<T>emptySet().iterator();
+		}
+
+
+		@Override
+		public int size() {
+			return 0;
+		}
+
+
+		@Override
+		public boolean add(final T t) {
+			return false;
+		}
+	}
+
+}
