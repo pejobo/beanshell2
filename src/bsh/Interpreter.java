@@ -412,6 +412,7 @@ public class Interpreter
 			Reader in = new CommandLineReader( new InputStreamReader(src));
 			Interpreter interpreter = 
 				new Interpreter( in, System.out, System.err, true );
+			interpreter.setShowResults(true);
 			interpreter.run();
 		}
 	}
