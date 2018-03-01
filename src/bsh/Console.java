@@ -53,6 +53,7 @@ public class Console
 				new Interpreter().eval("desktop()");
 			} catch ( EvalError e ) {
 				System.err.println("Couldn't start desktop: "+e);
+				e.printStackTrace();
 			}
 		} else {
 			System.err.println(

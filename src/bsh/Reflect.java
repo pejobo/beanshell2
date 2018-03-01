@@ -33,6 +33,9 @@
 
 package bsh;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -62,8 +65,24 @@ import java.util.ArrayList;
 */
 final class Reflect {
 
+	private static final boolean CHECK_MODULE_ACCESSIBILITY = true;
+    private static final MethodHandle trySetAccessible;
 
-	/**
+    static {
+        MethodHandle methodHandle = null;
+        if (CHECK_MODULE_ACCESSIBILITY) {
+			try {
+				final Method method = AccessibleObject.class.getDeclaredMethod("trySetAccessible");
+				methodHandle = MethodHandles.lookup().unreflect(method);
+			} catch (NoSuchMethodException | IllegalAccessException e) {
+				// ignore
+			}
+		}
+        trySetAccessible = methodHandle;
+    }
+
+
+    /**
 	 * A comperator wich sorts methods according to {@@link #getVisibility}.
 	 */
 	public static final Comparator<Method> METHOD_COMPARATOR = new Comparator<Method>() {
@@ -887,7 +906,26 @@ final class Reflect {
 
 
 	private static boolean isPublic(Member member) {
-		return Modifier.isPublic(member.getModifiers());
+		if (!Modifier.isPublic(member.getModifiers())) {
+			return false;
+		}
+		if (member instanceof AccessibleObject) {
+			return trySetAccessible((AccessibleObject) member);
+		}
+		return true;
+	}
+
+
+	private static boolean trySetAccessible(AccessibleObject accessibleObject) {
+		if (trySetAccessible == null) {
+			return true;
+		}
+		try {
+			final boolean result = (Boolean) trySetAccessible.invoke(accessibleObject);
+			return result;
+		} catch (final Throwable throwable) {
+			return false;
+		}
 	}
 
 

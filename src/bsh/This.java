@@ -35,6 +35,9 @@
 package bsh;
 
 import java.io.IOException;
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamException;
 import java.lang.reflect.*;
 import java.util.Map;
 import java.util.HashMap;
@@ -69,7 +72,7 @@ public final class This implements java.io.Serializable, Runnable
 	*/
 	private Map<Integer,Object> interfaces;
 
-	private final InvocationHandler invocationHandler = new Handler();
+	private transient InvocationHandler invocationHandler = new Handler();
 
 	/**
 		getThis() is a factory for bsh.This type references.  The capabilities
@@ -133,6 +136,12 @@ public final class This implements java.io.Serializable, Runnable
 		return interf;
 	}
 
+
+	private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+		stream.defaultReadObject();
+		invocationHandler = new Handler();
+	}
+
 	/**
 		This is the invocation handler for the dynamic proxy.
 		<p>
@@ -145,8 +154,14 @@ public final class This implements java.io.Serializable, Runnable
 		classes aren't there (doesn't it?)  This class shouldn't be loaded
 		if an XThis isn't instantiated in NameSpace.java, should it?
 	*/
-	class Handler implements InvocationHandler, java.io.Serializable 
-	{
+	class Handler implements InvocationHandler {
+
+
+		private Object readResolve() throws ObjectStreamException {
+			throw new NotSerializableException();
+		}
+
+
 		public Object invoke( Object proxy, Method method, Object[] args ) 
 			throws Throwable
 		{
