@@ -19,7 +19,7 @@
 	<property name="Specification-Title" value="BeanShell2" />
 	<property name="Specification-Version" value="${version}" />
 	<property name="Specification-Vendor" value="http://www.beanshell.org/" />
-	<property name="Implementation-Vendor" value="http://code.google.com/p/beanshell2" />
+	<property name="Implementation-Vendor" value="https://github.com/pejobo/beanshell2" />
 
 	<property name="src-dir" value="src" />
 	<property name="build-dir" value="classes" />
