@@ -40,15 +40,32 @@ import java.awt.Insets;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.InterruptedIOException;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.io.PrintStream;
+import java.io.Reader;
 import java.util.Vector;
 import java.awt.Cursor;
-import javax.swing.text.*;
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultStyledDocument;
+import javax.swing.text.MutableAttributeSet;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
 
 // Things that are not in the core packages
-
-import bsh.util.NameCompletion;
 
 /**
 	A JFC/Swing based console for the BeanShell desktop.
@@ -60,10 +77,8 @@ import bsh.util.NameCompletion;
   	Improvements by: Daniel Leuck
 		including Color and Image support, key press bug workaround
 */
-public class JConsole extends JScrollPane
-	implements GUIConsoleInterface, Runnable, KeyListener,
-	MouseListener, ActionListener, PropertyChangeListener 
-{
+public class JConsole extends JScrollPane implements GUIConsoleInterface, Runnable, KeyListener, MouseListener, ActionListener, PropertyChangeListener {
+
     private final static String	CUT = "Cut";
     private final static String	COPY = "Copy";
     private final static String	PASTE =	"Paste";
@@ -141,7 +156,7 @@ public class JConsole extends JScrollPane
 		if ( outPipe ==	null ) {
 			outPipe	= new PipedOutputStream();
 			try {
-				in = new PipedInputStream((PipedOutputStream)outPipe);
+				in = new PipedInputStream((PipedOutputStream) outPipe, 64 * 1024);
 			} catch	( IOException e	) {
 				print("Console internal	error (1)...", Color.red);
 			}
