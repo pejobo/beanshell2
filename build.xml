@@ -77,7 +77,7 @@
 	<!--  Add up all of the excludes -->
 	<!-- how do I add strings to break this long line? -->
 	<property name="excludes" 
-		value="${exclude-1.2},${exclude-1.1},${exclude-bsf},${exclude-servlet},${excludes-legacy},${exclude-classgen},${excludes-arbitrary}"/>
+		value="${exclude-bsf},${excludes-legacy}"/>
 
 	<!-- JARs -->
 	<property name="javadoc-zip" value="${dist-dir}/bsh-${version}-javadoc.zip"/>
@@ -205,9 +205,6 @@
 				<patternset refid="commands-bsh-patternset"/>
 				<!-- install the util/lib stuff -->
 				<patternset refid="util-lib-patternset"/>
-<!-- need to break this into a separate target to use exclude -->
-				<!-- install the servlet stuff -->
-				<patternset refid="bshservlet-patternset"/>
 			</fileset>
 		</copy>
 		<tstamp>
@@ -322,14 +319,6 @@
 		</patternset>
 	</fileset>
 
-	<fileset id="bshservlet-fileset" dir="${build-dir}">
-		<patternset id="bshservlet-patternset">
-			<include name="bsh/servlet/*.class"/>
-			<include name="bsh/servlet/*.bsh"/>
-			<include name="bsh/servlet/*.template"/>
-		</patternset>
-	</fileset>
-
 	<fileset id="commands-fileset" dir="${build-dir}">
 		<patternset>
 			<include name="bsh/commands/*.class"/>
@@ -398,7 +387,6 @@
 			<fileset refid="commands-fileset"/>
 			<fileset refid="bsf-fileset"/>
 			<fileset refid="classgen-fileset"/>
-			<fileset refid="bshservlet-fileset"/>
 <!-- hack, see core-fileset -->
 			<fileset dir="${build-dir}">
 				<patternset>
@@ -506,8 +494,7 @@
 			<fileset dir="${src-dir}/bsh/servlet/" includes="index.html"/>
 		</war>
 	</target>
-	<target name="bshservlet-wbsh-war" 
-					depends="compile,jarall" unless="exclude-servlet">
+	<target name="bshservlet-wbsh-war" depends="compile,jarall" unless="exclude-servlet">
 		<war warfile="${bshservlet-wbsh-war}" 
 			webxml="${src-dir}/bsh/servlet/example-web.xml">
 			<manifest>
