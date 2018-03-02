@@ -31,6 +31,6 @@ printBanner()
 	    jconsole.println();
 
 	} else
-		print( "BeanShell " + Interpreter.VERSION +" - http://code.google.com/p/beanshell2");
+		print( "BeanShell " + Interpreter.VERSION +" - https://github.com/pejobo/beanshell2");
 
 }
