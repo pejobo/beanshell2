@@ -3,14 +3,17 @@ March 3, 2018
 * Development version 2.1.8+ (md5sum=762dde403dbcd821f467de9b5754cb8f)
  * Drop of all remote code execution capabilities
  * Restricting (de)serialization for security reasons (the serialization feature may be dropped in one  of the next
-  releases) #109
+  releases) [#109](https://github.com/pejobo/beanshell2/issues/109)
  * Ability to run with Java-9 and Java-10 with restricted module access (jvm flag _--illegal-access=deny_).
  * Fixed a deadlock when pasting code in the graphical console 
 
 Feb. 20, 2014
 
 * Update [2.1.8](https://github.com/pejobo/beanshell2/raw/5b925f056c7a4b192fcd7389c9362d4f43403f70/downloads/bsh-2.1.8.jar)
-  * fixes #97, #98, and #99 - all variants of a regression introduced with #88
+  * fixes [#97](https://github.com/pejobo/beanshell2/issues/97), 
+  [#98](https://github.com/pejobo/beanshell2/issues/98), and
+  [#99](https://github.com/pejobo/beanshell2/issues/99) - all variants of a regression introduced with
+  [#88](https://github.com/pejobo/beanshell2/issues/88)
 
 
 Nov. 6, 2013
@@ -29,15 +32,16 @@ Sep. 27, 2013
    script code will break with this update.
    To receive the old behaviour either call `bsh.Capabilities.setAccessibility(true)` in your java code or 
    `setAccessibility(true)` in your script code. This change was done to allow the usage of beanshell2 in security
-   restricted environments. See issue #88 for code changes.
+   restricted environments. See issue [#88](https://github.com/pejobo/beanshell2/issues/88) for code changes.
   * New version number scheme (drop of b for build).
 
 
 Nov. 21, 2011
 
 * Update v2.1b5, fixing
-  * Do-while loop does not check condition on "continue" - issue #57
-  * Fixes when using JSR-223 an exception which is thrown for clause that shouldn't be evaluated - issue #60.
+  * Do-while loop does not check condition on "continue" - issue [#57](https://github.com/pejobo/beanshell2/issues/57)
+  * Fixes when using JSR-223 an exception which is thrown for clause that shouldn't be evaluated - issue
+   [#60](https://github.com/pejobo/beanshell2/issues/60).
 
 Older downloads are still available at [code.google.com](https://code.google.com/archive/p/beanshell2/downloads)
 
