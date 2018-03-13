@@ -9,8 +9,10 @@ ongoing effort to integrate the changes and improvements made to the project the
 
 The development branch here is [v2.1](https://github.com/pejobo/beanshell2/tree/v2.1), the latest 'released'
 version is 
-[2.1.9](https://github.com/pejobo/beanshell2/raw/5b925f056c7a4b192fcd7389c9362d4f43403f70/downloads/bsh-2.1.9.jar)
+[2.1.9](https://github.com/pejobo/beanshell2/raw/v2.1/dist/bsh-2.1.9.jar)
 which maps to commit
-[a70056fbe9727d8eadf8e21f3089cbe9f4f0913e](https://github.com/pejobo/beanshell2/commit/a70056fbe9727d8eadf8e21f3089cbe9f4f0913e)
+[a70056fbe9727d8eadf8e21f3089cbe9f4f0913e](https://github.com/pejobo/beanshell2/commit/a70056fbe9727d8eadf8e21f3089cbe9f4f0913e).
+
+See [releases page](https://github.com/pejobo/beanshell2/dist/README.md) for more information.
 
 

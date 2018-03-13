@@ -1,11 +1,12 @@
 March 3, 2018
 
-* Development version 2.1.8+ (md5sum=762dde403dbcd821f467de9b5754cb8f)
- * Drop of all remote code execution capabilities
- * Restricting (de)serialization for security reasons (the serialization feature may be dropped in one  of the next
+* Update [2.1.9](https://github.com/pejobo/beanshell2/raw/v2.1/dist/bsh-2.1.9.jar)
+  * Drop of all remote code execution capabilities
+  * Restricting (de)serialization for security reasons (the serialization feature may be dropped in one  of the next
   releases) [#109](https://github.com/pejobo/beanshell2/issues/109)
- * Ability to run with Java-9 and Java-10 with restricted module access (jvm flag _--illegal-access=deny_).
- * Fixed a deadlock when pasting code in the graphical console 
+  * Ability to run with Java-9 and Java-10 with restricted module access (jvm flag _--illegal-access=deny_).
+  * Fixed a deadlock when pasting code into the graphical console 
+  * [SHA512](https://raw.githubusercontent.com/pejobo/beanshell2/v2.1/dist/bsh-2.1.9.jar.sha512sum)
 
 Feb. 20, 2014
 
@@ -18,7 +19,7 @@ Feb. 20, 2014
 
 Nov. 6, 2013
 
-* Update [2.1.7]()
+* Update 2.1.7
   * Another hotfix when running beanshell in a security restricted environment
   * Fix for finally block not executed when an exception is thrown in catch block - thanks to Lorenzo Cameroni for pointing this out and suggesting a fix
 
