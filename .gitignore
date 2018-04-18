@@ -7,3 +7,4 @@ src/bsh/ParserConstants.java
 src/bsh/ParserTokenManager.java
 src/bsh/ParserTreeConstants.java
 src/bsh/bsh.jj
+/bin/
