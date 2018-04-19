@@ -4,6 +4,7 @@ src/bsh/ParserConstants.java
 src/bsh/ParserTokenManager.java
 src/bsh/ParserTreeConstants.java
 classes/*
+bin/*
 
 # compiled source #
 ###################
