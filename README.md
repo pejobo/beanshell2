@@ -15,4 +15,8 @@ which maps to commit
 
 See [releases page](https://github.com/pejobo/beanshell2/dist/README.md) for more information.
 
+For contributing: Please post your pull requests against branch [v2.1](https://github.com/pejobo/beanshell2/tree/v2.1).
+There is an ongoing effort to change the licence to [Apache License, version 2.0](http://www.apache.org/licenses/LICENSE-2.0) 
+(see also issue #110), so all contributions will be dual licenced.
+
 
