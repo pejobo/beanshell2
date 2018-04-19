@@ -85,8 +85,36 @@ public final class BSHLiteral extends SimpleNode
 		return ch;
 	}
 
+	public static String decode(String str) {
+		StringBuilder sb = new StringBuilder(str.length());
+		char[] chars = str.toCharArray();
+		for (int i = 0; i < chars.length; i++) {
+			char c = chars[i];
+			if (i + 1 < chars.length && c == '\\' && chars[i + 1] == 'u') {
+				char cc = 0;
+				for (int j = 0; j < 4; j++) {
+					char ch = Character.toLowerCase(chars[i + 2 + j]);
+					if ('0' <= ch && ch <= '9' || 'a' <= ch && ch <= 'f' || 'A' <= ch && ch <= 'F') {
+						cc |= (Character.digit(ch, 16) << (3 - j) * 4);
+					} else {
+						cc = 0;
+						break;
+					}
+				}
+				if (cc > 0) {
+					i += 5;
+					sb.append(cc);
+					continue;
+				}
+			}
+			sb.append(c);
+		}
+		return sb.toString();
+	}
+
 	public void charSetup(String str)
 	{
+		str = decode(str);
 		char ch = str.charAt(0);
 		if(ch == '\\')
 		{
@@ -104,6 +132,7 @@ public final class BSHLiteral extends SimpleNode
 
 	void stringSetup(String str)
 	{
+		str = decode(str);
 		StringBuilder buffer = new StringBuilder();
 		int len = str.length();
 		for(int i = 0; i < len; i++)

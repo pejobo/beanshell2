@@ -72,6 +72,18 @@ public class StringLiteralTest {
 		assertStringParsing("test\ntest", DelimiterMode.MULTI_LINE);
 	}
 
+	@Test
+	public void parse_unicode_literals_in_comment() throws Exception {
+		final Interpreter interpreter = new Interpreter();
+		Object result = interpreter.eval("// source path: C:\\user\\desktop");
+		Assert.assertEquals(result, null);
+		char c = (char) interpreter.eval("return '\\u51ea\'");
+		Assert.assertEquals(c, '\u51ea');
+		String s = (String) interpreter.eval("return \"\\u51EA1234\"; // \\user\\desktop");
+		System.out.println(s);
+		Assert.assertEquals(s, "\u51EA1234");
+	}
+
 
 	private void assertStringParsing(final String s, final DelimiterMode mode) throws EvalError {
 		assertStringParsing(s, s, mode);
