@@ -56,7 +56,7 @@ public class BshClassLoader extends URLClassLoader
 	}
 
 	/**
-		@param bases URLs JARClassLoader seems to require absolute paths 
+		@param bcp BshClassPath
 	*/
 	public BshClassLoader( BshClassManager classManager, BshClassPath bcp ) {
 		this( classManager, bcp.getPathComponents() );
@@ -64,7 +64,6 @@ public class BshClassLoader extends URLClassLoader
 
 	/**
 		For use by children
-		@param bases URLs JARClassLoader seems to require absolute paths 
 	*/
 	protected BshClassLoader( BshClassManager classManager ) { 
 		this( classManager, new URL [] { } );

@@ -34,6 +34,8 @@
 
 package	bsh;
 
+import bsh.This;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.ArrayList;
@@ -162,7 +164,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 	// Begin constructors
 
 	/**
-		@parent the parent namespace of this namespace.  Child namespaces
+		@param parent the parent namespace of this namespace.  Child namespaces
 		inherit all variables and methods of their parent and can (of course)
 		override / shadow them.
 	*/
@@ -1266,7 +1268,7 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 		required.  The method will appear as if called externally from Java.
 		<p>
 
-		@see bsh.This.invokeMethod( 
+		@see bsh.This#invokeMethod(
 			String methodName, Object [] args, Interpreter interpreter, 
 			CallStack callstack, SimpleNode callerInfo, boolean )
 	*/
@@ -1281,9 +1283,8 @@ public class NameSpace implements Serializable, BshClassManager.Listener, NameSo
 	/**
 		This method simply delegates to This.invokeMethod();
 		<p>
-		@see bsh.This.invokeMethod( 
-			String methodName, Object [] args, Interpreter interpreter, 
-			CallStack callstack, SimpleNode callerInfo )
+		@see This#invokeMethod(java.lang.String, java.lang.Object[],
+                    bsh.Interpreter, bsh.CallStack, bsh.SimpleNode, boolean)
 	*/
 	public Object invokeMethod( 
 		String methodName, Object [] args, Interpreter interpreter, 
