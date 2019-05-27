@@ -70,6 +70,7 @@ public class JavaCharStream
   protected boolean prevCharIsLF = false;
 
   protected java.io.Reader inputStream;
+  protected static final java.io.IOException fillException = new java.io.IOException("FillBuff");
 
   protected char[] nextCharBuf;
   protected char[] buffer;
@@ -136,7 +137,7 @@ public class JavaCharStream
                                             4096 - maxNextCharInd)) == -1)
         {
            inputStream.close();
-           throw new java.io.IOException();
+           throw fillException;
         }
         else
            maxNextCharInd += i;
