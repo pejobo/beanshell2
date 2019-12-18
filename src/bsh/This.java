@@ -121,7 +121,7 @@ public final class This implements java.io.Serializable, Runnable
 		int hash = 21;
 		for(int i=0; i<ca.length; i++)
 			hash *= ca[i].hashCode() + 3;
-		Integer hashKey = new Integer(hash);
+		Integer hashKey = Integer.valueOf(hash);
 
 		Object interf = interfaces.get( hashKey );
 
@@ -381,12 +381,12 @@ public final class This implements java.io.Serializable, Runnable
 
 		// a default hashCode()
 		if ( methodName.equals("hashCode") && args.length==0 )
-			return new Integer(this.hashCode());
+			return Integer.valueOf(this.hashCode());
 
 		// a default equals() testing for equality with the This reference
 		if ( methodName.equals("equals") && args.length==1 ) {
 			Object obj = args[0];
-			return new Boolean( this == obj );
+			return Boolean.valueOf( this == obj );
 		}
 
 		// a default clone()

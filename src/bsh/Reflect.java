@@ -67,23 +67,56 @@ final class Reflect {
 
 	private static final boolean CHECK_MODULE_ACCESSIBILITY = true;
     private static final MethodHandle trySetAccessible;
-
+    private static final MethodHandle getModule;
+    private static final MethodHandle isExported;
+    private static final Object myModule;
+   
     static {
-        MethodHandle methodHandle = null;
-        if (CHECK_MODULE_ACCESSIBILITY) {
-			try {
-				final Method method = AccessibleObject.class.getDeclaredMethod("trySetAccessible");
-				methodHandle = MethodHandles.lookup().unreflect(method);
-			} catch (NoSuchMethodException | IllegalAccessException e) {
-				// ignore
-			}
-		}
-        trySetAccessible = methodHandle;
+       if (CHECK_MODULE_ACCESSIBILITY) {
+
+          // Get methodHandle for trySetAccessible if it exists in this version
+          MethodHandle methodHandle = null;
+          try {
+             final Method method = AccessibleObject.class.getDeclaredMethod("trySetAccessible");
+             methodHandle = MethodHandles.lookup().unreflect(method);
+          } catch (NoSuchMethodException | IllegalAccessException e) {
+             // ignore
+          }
+          trySetAccessible = methodHandle;
+
+          // Get methodHandle for getModule if it exists in this version
+          methodHandle = null;
+          Object mod = null;
+          try {
+             Method method = Class.class.getDeclaredMethod("getModule");
+             methodHandle = MethodHandles.lookup().unreflect(method);
+             mod = methodHandle.invoke(Reflect.class);
+          } catch (Throwable th) {
+             // ignore
+          }
+          getModule = methodHandle;
+          myModule = mod;
+
+          // Get methodHandle for isExported if it exists in this version
+          methodHandle = null;
+          try {
+             Class clz = Reflect.class.getClassLoader().loadClass("java.lang.Module");
+             if (clz != null) {
+                Method method = clz.getDeclaredMethod("isExported", String.class);
+                methodHandle = MethodHandles.lookup().unreflect(method);
+             }
+          } catch (Exception ex) {
+             ex.printStackTrace();
+             // ignore
+          }
+          isExported = methodHandle;
+
+       }
     }
 
 
     /**
-	 * A comperator wich sorts methods according to {@@link #getVisibility}.
+	 * A comperator wich sorts methods according to {@link #getVisibility}.
 	 */
 	public static final Comparator<Method> METHOD_COMPARATOR = new Comparator<Method>() {
 		public int compare(final Method a, final Method b) {
@@ -920,6 +953,31 @@ final class Reflect {
 		if (trySetAccessible == null) {
 			return true;
 		}
+
+                /*
+                 * If running under JDK9+ then check to see if the
+                 * package has been exported from its module.
+                 * If is hasn't then do not trySetAccessible
+                 * because this will either print a warning message
+                 * or the behaviour will change in future 
+                 * versions.
+                 */
+                if (myModule != null && isExported != null) {
+                   try {
+                      Class declaringClass = ((Member)accessibleObject).getDeclaringClass();
+                      Object them = getModule.invoke(declaringClass);
+                      if (myModule != them) {
+                         String pkg = declaringClass.getName();
+                         pkg = pkg.substring(0,pkg.lastIndexOf('.'));
+                         boolean ie = (boolean)isExported.invoke(them, pkg);
+                         if (!ie) 
+                            return false;
+                      }
+                   } catch (Throwable th) {
+                      // Ignore
+                   }
+                }
+                
 		try {
 			final boolean result = (Boolean) trySetAccessible.invoke(accessibleObject);
 			return result;
