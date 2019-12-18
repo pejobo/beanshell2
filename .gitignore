@@ -1,9 +1,10 @@
 src/bsh/bsh.jj
-src/bsh/Parser.java
+# src/bsh/Parser.java
 src/bsh/ParserConstants.java
 src/bsh/ParserTokenManager.java
 src/bsh/ParserTreeConstants.java
 classes/*
+bin/*
 
 # compiled source #
 ###################
