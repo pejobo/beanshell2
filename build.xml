@@ -159,6 +159,7 @@
 			excludes="${excludes},**/bak/**"
 			source="${ant.build.javac.source}"
 			target="${ant.build.javac.target}"
+                        includeantruntime="false"
 		>
 			<classpath>
 				<fileset refid="lib-fileset"/>
@@ -193,6 +194,7 @@
 			excludes="${excludes},**/bak/**"
 			source="${ant.build.javac.source}"
 			target="${ant.build.javac.target}"
+                        includeantruntime="false"
 		>
 			<classpath>
 				<fileset refid="lib-fileset"/>

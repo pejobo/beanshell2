@@ -245,7 +245,7 @@ public class JConsole extends JScrollPane implements GUIConsoleInterface, Runnab
 				break;
 
 			case ( KeyEvent.VK_U ):	// clear line
-				if ( (e.getModifiers() & InputEvent.CTRL_MASK) > 0 ) {
+				if ( (e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) > 0 ) {
 					replaceRange( "", cmdStart, textLength());
 					histLine = 0;
 					e.consume();
@@ -281,7 +281,7 @@ public class JConsole extends JScrollPane implements GUIConsoleInterface, Runnab
 			// Control-C
 			case ( KeyEvent.VK_C ):
 				if (text.getSelectedText() == null) {
-				    if (( (e.getModifiers() & InputEvent.CTRL_MASK) > 0	)
+				    if (( (e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) > 0	)
 					&& (e.getID() == KeyEvent.KEY_PRESSED))	{
 						append("^C");
 					}
@@ -299,9 +299,9 @@ public class JConsole extends JScrollPane implements GUIConsoleInterface, Runnab
 
 			default:
 				if ( 
-					(e.getModifiers() & 
-					(InputEvent.CTRL_MASK 
-					| InputEvent.ALT_MASK | InputEvent.META_MASK)) == 0 ) 
+					(e.getModifiersEx() & 
+					(InputEvent.CTRL_DOWN_MASK 
+					| InputEvent.ALT_DOWN_MASK | InputEvent.META_DOWN_MASK)) == 0 ) 
 				{
 					// plain character
 					forceCaretMoveToEnd();
