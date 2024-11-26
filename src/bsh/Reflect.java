@@ -50,6 +50,8 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * All of the reflection API code lies here.  It is in the form of static
@@ -67,6 +69,7 @@ final class Reflect {
 
 	private static final boolean CHECK_MODULE_ACCESSIBILITY = true;
     private static final MethodHandle trySetAccessible;
+    private static final ReflectError REFLECT_ERROR = new ReflectError("INTERNAL");
 
     static {
         MethodHandle methodHandle = null;
@@ -333,11 +336,17 @@ final class Reflect {
 			if (Capabilities.haveAccessibility()) {
 				field = findAccessibleField(clas, fieldName);
 			} else {
-			    // Class getField() finds only public fields
-				field = clas.getField(fieldName);
+				MemberCache cache = memberCache.get(clas);
+				if (cache == null) {
+					cache = new MemberCache(clas);
+					memberCache.put(clas, cache);
+				}
+				field = cache.findField(fieldName);
+				if (field == null)
+					throw REFLECT_ERROR;
 			}
 		} catch (NoSuchFieldException e) {
-			throw new ReflectError("No such field: " + fieldName, e);
+			throw REFLECT_ERROR;
 		} catch (SecurityException e) {
 			throw new UtilTargetError("Security Exception while searching fields of: " + clas, e);
 		}
@@ -347,6 +356,15 @@ final class Reflect {
 		}
 
 		return field;
+	}
+
+	public static Class<?> findInnerClass(Class clas, String innerName) {
+		MemberCache cache = memberCache.get(clas);
+		if (cache == null) {
+			cache = new MemberCache(clas);
+			memberCache.put(clas, cache);
+		}
+		return cache.findInnerClass(innerName);
 	}
 
 
@@ -929,12 +947,12 @@ final class Reflect {
 	}
 
 
-	private static boolean isPublic(Class clazz) {
+	static boolean isPublic(Class clazz) {
 		return Modifier.isPublic(clazz.getModifiers());
 	}
 
 
-	private static boolean isStatic(Method m) {
+	static boolean isStatic(Method m) {
 		return Modifier.isStatic(m.getModifiers());
 	}
 
@@ -983,4 +1001,52 @@ final class Reflect {
 		}
 	}
 
+
+	/** Class member soft key and soft value reference cache */
+	static final HashMap<Class<?>, MemberCache> memberCache = new HashMap<>();
+
+	/** Class member cached value instance **/
+	static final class MemberCache {
+		private final ConcurrentHashMap<String, Field> fields = new ConcurrentHashMap<>();
+		private final ConcurrentHashMap<String, Class> classes = new ConcurrentHashMap<>();
+
+		public MemberCache(Class<?> clazz) {
+			Class<?> type = clazz;
+
+			for (Class innerClz : type.getDeclaredClasses()) {
+				classes.put(innerClz.getSimpleName(), innerClz);
+			}
+
+			while (type != null) {
+				for (Field f : type.getDeclaredFields()) {
+					if (isPublic(f))
+						cacheMember(f);
+				}
+
+				type = type.getSuperclass();
+				if (type != null)
+					memberCache.put(type, new MemberCache(type));
+			}
+		}
+
+		public Class<?> findInnerClass(String name) {
+			return classes.get(name);
+		}
+
+		public boolean hasField(String name) {
+			return fields.containsKey(name);
+		}
+
+		public Field findField(String name) {
+			if (!hasField(name))
+				return null;
+			return fields.get(name);
+		}
+
+		private boolean cacheMember(Field member) {
+			if (!hasField(member.getName()))
+				return null == fields.put(member.getName(), member);
+			return false;
+		}
+	}
 }

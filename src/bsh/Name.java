@@ -295,8 +295,8 @@ class Name implements java.io.Serializable
 			Class clas = null;
 			int i = 1;
 			String className = null;
-			for(; i <= countParts(evalName); i++)
-			{
+			final int parts = countParts(evalName);
+			for(; i <= parts; i++) {
 				className = prefix(evalName, i);
 				if ( (clas = namespace.getClass(className)) != null )
 					break;
@@ -305,7 +305,7 @@ class Name implements java.io.Serializable
 			if ( clas != null )  {
 				return completeRound(
 					className,
-					suffix( evalName, countParts(evalName)-i ),
+					suffix( evalName, parts-i ),
 					new ClassIdentifier(clas) 
 				);
 			}
@@ -374,7 +374,7 @@ class Name implements java.io.Serializable
 		if ( evalBaseObject instanceof ClassIdentifier ) 
 		{
 			Class clas = ((ClassIdentifier)evalBaseObject).getTargetClass();
-			String field = prefix(evalName, 1);
+			String field = varName;
 
 			// Class qualified 'this' reference from inner class.
 			// e.g. 'MyOuterClass.this'
@@ -410,8 +410,12 @@ class Name implements java.io.Serializable
 
 			// inner class?
 			if ( obj == null ) {
-				String iclass = clas.getName()+"$"+field;
-				Class c = namespace.getClass( iclass );
+				Class c = Reflect.findInnerClass(clas, field);
+				if (c == null) {
+					String iclass = clas.getName() + "$" + field;
+					c = namespace.getClass(iclass);
+				}
+
 				if ( c != null )
 					obj = new ClassIdentifier(c);
 			}
@@ -436,7 +440,7 @@ class Name implements java.io.Serializable
 			Some kind of field access?
 		*/
 
-		String field = prefix(evalName, 1);
+		String field = varName;
 
 		// length access on array? 
 		if ( field.equals("length") && evalBaseObject.getClass().isArray() )
@@ -999,8 +1003,7 @@ class Name implements java.io.Serializable
 
 	public static boolean isCompound(String value)
 	{
-		return value.indexOf('.') != -1 ;
-		//return countParts(value) > 1;
+		return value.indexOf('.') != -1;
 	}
 
 	static int countParts(String value)
